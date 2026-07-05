@@ -13,10 +13,10 @@ import kr.ktb.finn_week6.domain.user.dto.request.UpdateUserRequest;
 import kr.ktb.finn_week6.domain.user.dto.response.CreateUserResponse;
 import kr.ktb.finn_week6.domain.user.dto.response.LoginUserResponse;
 import kr.ktb.finn_week6.domain.user.dto.response.UserDetailResponse;
+import kr.ktb.finn_week6.domain.user.repository.RefreshTokenRepository;
 import kr.ktb.finn_week6.domain.user.service.UserService;
 import kr.ktb.finn_week6.global.RequestMessage;
 import kr.ktb.finn_week6.global.dto.ApiResponse;
-import kr.ktb.finn_week6.security.auth.LoginUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
 
     @PostMapping("/signup")
@@ -107,16 +108,17 @@ public class UserController {
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<Void> logout() {
-
+    public ApiResponse<Void> logout(@AuthenticationPrincipal Long userId, @CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        userService.deleteRefreshToken(userId, refreshToken);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), null);
     }
 
     @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@AuthenticationPrincipal Long userId) {
+    public void deleteUser(@AuthenticationPrincipal Long userId, @CookieValue(name = "refreshToken", required = false) String refreshToken) {
         DeleteUserCommand deleteUserCommand = new DeleteUserCommand(userId);
         userService.deleteUser(deleteUserCommand);
+        userService.deleteRefreshToken(userId,refreshToken);
     }
 
 }

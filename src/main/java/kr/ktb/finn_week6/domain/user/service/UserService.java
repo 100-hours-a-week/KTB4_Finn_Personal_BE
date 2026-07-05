@@ -170,4 +170,12 @@ public class UserService {
         );
     }
 
+    @Transactional
+    public void deleteRefreshToken(Long userId, String refreshToken){
+        RefreshToken saved = refreshTokenRepository.findByToken(refreshToken).orElseThrow(
+                () -> new AuthorizedException(RequestMessage.UNAUTHORIZED.getDescription())
+        );
+        refreshTokenRepository.delete(saved);
+    }
+
 }
