@@ -15,7 +15,8 @@ public enum RequestMessage {
     NOT_FOUND_POST("Post not found"),
     NOT_FOUND_EMAIL("Email not found"),
     RESOURCE_DELETED("Resource deleted"),
-    ALREADY_LIKED("Already liked");
+    ALREADY_LIKED("Already liked"),
+    TOKEN_REFRESH_SUCCESS("Token refreshed successfully");
 
     private final String description;
 

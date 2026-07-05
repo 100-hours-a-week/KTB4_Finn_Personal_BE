@@ -1,7 +1,7 @@
 package kr.ktb.finn_week6.domain.user.dto.command;
 
 public record UpdatePasswordCommand(
-        Long sessionUserId,
+        Long loginUserId,
         String password
 ) {
 }

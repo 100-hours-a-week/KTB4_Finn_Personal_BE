@@ -1,7 +1,6 @@
 package kr.ktb.finn_week6.domain.user.dto.request;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import kr.ktb.finn_week6.domain.user.dto.command.CreateUserCommand;

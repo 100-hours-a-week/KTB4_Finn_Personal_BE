@@ -1,9 +1,7 @@
 package kr.ktb.finn_week6.domain.user.dto.command;
 
-import kr.ktb.finn_week6.domain.user.dto.response.UserDetailResponse;
-
 public record UpdateUserCommand(
-        Long sessionUserId,
+        Long loginUserId,
         String nickname,
         String profileImg
 ) {

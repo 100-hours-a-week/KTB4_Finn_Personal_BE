@@ -1,9 +1,7 @@
 package kr.ktb.finn_week6.domain.post.service;
 
 import kr.ktb.finn_week6.domain.comment.Comment;
-import kr.ktb.finn_week6.domain.comment.dto.response.CommentDetailResponse;
 import kr.ktb.finn_week6.domain.comment.repository.CommentRepository;
-import kr.ktb.finn_week6.domain.comment.service.CommentService;
 import kr.ktb.finn_week6.domain.like.Like;
 import kr.ktb.finn_week6.domain.like.repository.LikeRepository;
 import kr.ktb.finn_week6.domain.post.Post;
@@ -77,8 +75,12 @@ public class PostService {
         Post post = postRepository.findById(command.postId()).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_POST.getDescription())
         );
+        String targetImg = post.getContentImg();
+        if(command.contentImg() != null){
+            targetImg = command.contentImg();
+        }
         permissionValidator.validatePermission(post.getUser().getId(), command.loginUserId());
-        post.updatePost(command.title(),command.content(), command.contentImg());
+        post.updatePost(command.title(),command.content(), targetImg);
 
         return  UpdatePostResponse.createResponse(post);
     }
@@ -90,13 +92,14 @@ public class PostService {
         );
         permissionValidator.validatePermission(targetPost.getUser().getId(), sessionUserId);
         targetPost.setDeleted();
+
         List<Comment> comments = commentRepository.findByPostIdWithPost(postId);
         for (Comment comment : comments) {
             comment.setDeleted();
             comment.getPost().decreaseCommentCount();
         }
 
-        List<Like> byPostId = likeRepository.findByPostId(postId);
+        List<Like> byPostId = likeRepository.findUndeletedByPostId(postId);
         for (Like like : byPostId) {
             like.setDeleted();
             like.getPost().decreaseLikeCount();

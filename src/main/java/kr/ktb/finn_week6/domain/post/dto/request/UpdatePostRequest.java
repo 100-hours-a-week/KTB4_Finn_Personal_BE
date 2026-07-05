@@ -13,6 +13,7 @@ public record UpdatePostRequest(
         String contentImg
 ) {
     public UpdatePostCommand toCommand(Long userId, Long postId){
+
         return new UpdatePostCommand(userId,postId,title(),content(),contentImg());
     }
 }

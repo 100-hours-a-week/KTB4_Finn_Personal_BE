@@ -20,8 +20,10 @@ import kr.ktb.finn_week6.domain.post.service.PostService;
 import kr.ktb.finn_week6.global.RequestMessage;
 import kr.ktb.finn_week6.global.SessionManager;
 import kr.ktb.finn_week6.global.dto.ApiResponse;
+import kr.ktb.finn_week6.security.auth.LoginUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,32 +33,27 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
-    private final SessionManager sessionManager;
     private final CommentService commentService;
     private final LikeService likeService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<CreatePostResponse> registerPost(@Valid @RequestBody CreatePostRequest request, HttpSession session){
-        Long sessionUserId = sessionManager.getSessionUserId(session);
-        CreatePostCommand postCommand = request.createPostCommand(sessionUserId);
+    public ApiResponse<CreatePostResponse> registerPost(@Valid @RequestBody CreatePostRequest request, @AuthenticationPrincipal Long userId){
+        CreatePostCommand postCommand = request.createPostCommand(userId);
         CreatePostResponse response = postService.register(postCommand);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), response);
     }
 
     @GetMapping("/{postId}")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<PostDetailResponse> getPost(@PathVariable Long postId, HttpSession session){
-        Long sessionUserId = sessionManager.getSessionUserId(session);
-
-        PostDetailResponse postDetail = postService.getPostDetail(postId, sessionUserId);
+    public ApiResponse<PostDetailResponse> getPost(@PathVariable Long postId, @AuthenticationPrincipal Long userId){
+        PostDetailResponse postDetail = postService.getPostDetail(postId, userId);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postDetail);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<PostListResponse> getPostList(HttpSession session){
-        sessionManager.getSessionUserId(session);
+    public ApiResponse<PostListResponse> getPostList(){
         List<PostResponse> postList = postService.getPostList();
         PostListResponse postListResponse = PostListResponse.createPostListResponse(postList);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
@@ -64,43 +61,39 @@ public class PostController {
 
     @PatchMapping("/{postId}")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<UpdatePostResponse> updatePost(@PathVariable Long postId, @Valid @RequestBody UpdatePostRequest request, HttpSession session){
-        Long sessionUserId = sessionManager.getSessionUserId(session);
-        UpdatePostCommand command = request.toCommand(sessionUserId, postId);
+    public ApiResponse<UpdatePostResponse> updatePost(@PathVariable Long postId, @Valid @RequestBody UpdatePostRequest request, @AuthenticationPrincipal Long userId){
+        UpdatePostCommand command = request.toCommand(userId, postId);
         UpdatePostResponse updatePostResponse = postService.updatePost(command);
+
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), updatePostResponse);
     }
 
 
     @PostMapping("/{postId}/comments")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<CreateCommentResponse> registerComment(@PathVariable Long postId, @Valid @RequestBody CreateCommentRequest request, HttpSession session){
-        Long sessionUserId = sessionManager.getSessionUserId(session);
-        CreateCommentCommand commentCommand = request.createCommentCommand(postId, sessionUserId, request);
+    public ApiResponse<CreateCommentResponse> registerComment(@PathVariable Long postId, @Valid @RequestBody CreateCommentRequest request, @AuthenticationPrincipal Long userId){
+        CreateCommentCommand commentCommand = request.createCommentCommand(postId, userId, request);
         CreateCommentResponse register = commentService.register(commentCommand);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), register);
     }
 
     @GetMapping("/{postId}/comments")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<CommentListResponse> getCommentsByPostId(@PathVariable Long postId, HttpSession session){
-        Long sessionUserId = sessionManager.getSessionUserId(session);
-        List<CommentDetailResponse> comments = commentService.getCommentsByPostId(postId, sessionUserId);
+    public ApiResponse<CommentListResponse> getCommentsByPostId(@PathVariable Long postId, @AuthenticationPrincipal Long userId){
+        List<CommentDetailResponse> comments = commentService.getCommentsByPostId(postId, userId);
         CommentListResponse commentListResponse = CommentListResponse.createCommentListResponse(comments);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), commentListResponse);
     }
 
     @DeleteMapping("/{postId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deletePost(@PathVariable Long postId, HttpSession session){
-        Long sessionUserId = sessionManager.getSessionUserId(session);
-        postService.deletePost(postId, sessionUserId);
+    public void deletePost(@PathVariable Long postId, @AuthenticationPrincipal Long userId){
+        postService.deletePost(postId, userId);
     }
 
     @PostMapping("/{postId}/like")
-    public ApiResponse<LikeResponse> likePost(@PathVariable Long postId, HttpSession session){
-        Long sessionUserId = sessionManager.getSessionUserId(session);
-        LikePostCommand likePostCommand = LikePostCommand.createLikePostCommand(sessionUserId, postId);
+    public ApiResponse<LikeResponse> likePost(@PathVariable Long postId, @AuthenticationPrincipal Long userId){
+        LikePostCommand likePostCommand = LikePostCommand.createLikePostCommand(userId, postId);
         LikeResponse likeResponseDto = likeService.likePost(likePostCommand);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), likeResponseDto);
     }

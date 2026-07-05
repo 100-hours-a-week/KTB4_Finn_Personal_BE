@@ -10,7 +10,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -38,6 +37,12 @@ public class GlobalExceptionHandler {
     //401
     @ExceptionHandler(UnauthenticatedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(UnauthenticatedException e){
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiResponse<>(e.getMessage(),null));
+    }
+    @ExceptionHandler(AuthorizedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthorizedException(AuthorizedException e){
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(e.getMessage(),null));

@@ -2,17 +2,16 @@ package kr.ktb.finn_week6.domain.post.repository;
 
 import jakarta.persistence.EntityManager;
 import kr.ktb.finn_week6.domain.post.Post;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
+@RequiredArgsConstructor
 public class PostRepository {
     private final EntityManager em;
-    public PostRepository(EntityManager em) {
-        this.em = em;
-    }
 
     public Post save(Post post) {
         em.persist(post);
@@ -23,9 +22,8 @@ public class PostRepository {
         return Optional.ofNullable(em.find(Post.class, id));
     }
     public List<Post> findByUserId(Long userId){
-        return em.createQuery("select p from Post p where p.user.id = :userId order by p.createdAt desc", Post.class)
+        return em.createQuery("select p from Post p where p.user.id = :userId", Post.class)
                 .setParameter("userId", userId)
-                .setMaxResults(10)
                 .getResultList();
     }
 

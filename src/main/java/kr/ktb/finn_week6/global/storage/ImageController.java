@@ -4,11 +4,7 @@ import kr.ktb.finn_week6.global.RequestMessage;
 import kr.ktb.finn_week6.global.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -27,7 +23,6 @@ public class ImageController {
     @PostMapping("/posts")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ImageUploadResponse> uploadPostImage(@RequestParam("file") MultipartFile file) {
-
         return upload(file, "posts");
     }
 

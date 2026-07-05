@@ -39,6 +39,10 @@ public class CommentService{
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_POST.getDescription())
         );
 
+        if(post.isDeleted()){
+            throw new NotFoundException(RequestMessage.NOT_FOUND.getDescription());
+        }
+
         Comment comment = new Comment(user, post, command.content());
         Comment savedComment = commentRepository.save(comment);
         post.increaseCommentCount();

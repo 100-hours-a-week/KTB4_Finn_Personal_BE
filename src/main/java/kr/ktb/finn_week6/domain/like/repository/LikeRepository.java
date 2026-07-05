@@ -13,12 +13,6 @@ import java.util.Optional;
 public class LikeRepository {
     private final EntityManager em;
 
-    public boolean existsByPostIdAndUserId(Long postId, Long userId){
-        return !em.createQuery("SELECT l FROM Like l WHERE l.post.id = :postId AND l.user.id = :userId", Like.class)
-                .setParameter("postId", postId)
-                .setParameter("userId", userId)
-                .getResultList().isEmpty();
-    }
     public void save(Like like){
         em.persist(like);
     }
@@ -40,8 +34,8 @@ public class LikeRepository {
                 .getResultList().stream().findFirst();
     }
 
-    public List<Like> findByPostId(Long postId){
-        return em.createQuery("SELECT l FROM Like l join fetch l.post WHERE l.post.id = :postId", Like.class)
+    public List<Like> findUndeletedByPostId(Long postId){
+        return em.createQuery("SELECT l FROM Like l join fetch l.post WHERE l.post.id = :postId AND l.isDeleted = false ", Like.class)
                 .setParameter("postId", postId)
                 .getResultList();
     }

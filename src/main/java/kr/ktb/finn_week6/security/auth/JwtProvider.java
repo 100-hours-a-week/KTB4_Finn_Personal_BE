@@ -69,7 +69,7 @@ public class JwtProvider {
         return Jwts.parser()//jwt 읽기 위한 파서
                 .verifyWith((SecretKey) key) //서명 인증???key는 서버에서 가지고 있는 거 아닌가
                 .build()
-                .parseSignedClaims(token);//토큰 파싱 -> header + payload + signature로 복호화
+                .parseSignedClaims(token);//토큰 파싱 -> header + payload + signature로 디코딩
     }
 
     public boolean isAccessToken(String token) {

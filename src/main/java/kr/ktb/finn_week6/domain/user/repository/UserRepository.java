@@ -19,6 +19,7 @@ public class UserRepository {
     public void save(User user) {
         em.persist(user);
     }
+
     public Optional<User> findById(Long id){
         try{
             User user = em.createQuery("select u from User u where u.id = :id AND u.isDeleted = false", User.class)

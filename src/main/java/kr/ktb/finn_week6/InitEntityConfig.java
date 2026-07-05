@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.stream.IntStream;
 
@@ -14,6 +15,7 @@ import java.util.stream.IntStream;
 public class InitEntityConfig {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     ApplicationRunner init(){
