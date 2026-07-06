@@ -39,7 +39,7 @@ public class JwtProvider {
         Instant now =  Instant.now(); //현재 시간
         return Jwts.builder()// JWT 생성 위한 builder 시작
                 .subject(String.valueOf(userId)) //JWT의 sub에 사용자 ID 삽인 =============> sub이 뭔데
-                .claim("typ", type)//JWT안에 typ라는 claims 추가. 뒤에 type은 토큰 종류 뜻하는 거 아닌가?????
+                .claim("typ", type)//JWT안에 typ라는 claims 추가. 뒤에 type은 토큰 종류 뜻하는 건가
                 .claims(claims)//추가 claims들 creaetAccessToken에서 Map.of에 있는 정보들
                 .issuedAt(Date.from(now))//JWT발급 시간
                 .expiration(Date.from(now.plusSeconds(expSeconds)))//JWT만료시간
