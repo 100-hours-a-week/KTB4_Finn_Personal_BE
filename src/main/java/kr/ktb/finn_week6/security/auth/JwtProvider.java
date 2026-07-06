@@ -67,7 +67,7 @@ public class JwtProvider {
 
     public Jws<Claims> parseToken(String token){ //JWT 문자열 검증하고 내부 정보(claims)를 꺼내는 메서드
         return Jwts.parser()//jwt 읽기 위한 파서
-                .verifyWith((SecretKey) key) //서명 인증???key는 서버에서 가지고 있는 거 아닌가
+                .verifyWith((SecretKey) key)
                 .build()
                 .parseSignedClaims(token);//토큰 파싱 -> header + payload + signature로 디코딩
     }
