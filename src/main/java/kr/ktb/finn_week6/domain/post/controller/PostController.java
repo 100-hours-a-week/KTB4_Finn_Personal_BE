@@ -1,6 +1,5 @@
 package kr.ktb.finn_week6.domain.post.controller;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import kr.ktb.finn_week6.domain.comment.dto.command.CreateCommentCommand;
 import kr.ktb.finn_week6.domain.comment.dto.request.CreateCommentRequest;
@@ -13,14 +12,13 @@ import kr.ktb.finn_week6.domain.like.dto.response.LikeResponse;
 import kr.ktb.finn_week6.domain.like.service.LikeService;
 import kr.ktb.finn_week6.domain.post.dto.command.CreatePostCommand;
 import kr.ktb.finn_week6.domain.post.dto.command.UpdatePostCommand;
+import kr.ktb.finn_week6.domain.post.dto.enums.PostFilter;
 import kr.ktb.finn_week6.domain.post.dto.request.CreatePostRequest;
 import kr.ktb.finn_week6.domain.post.dto.request.UpdatePostRequest;
 import kr.ktb.finn_week6.domain.post.dto.response.*;
 import kr.ktb.finn_week6.domain.post.service.PostService;
 import kr.ktb.finn_week6.global.RequestMessage;
-import kr.ktb.finn_week6.global.SessionManager;
 import kr.ktb.finn_week6.global.dto.ApiResponse;
-import kr.ktb.finn_week6.security.auth.LoginUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -53,11 +51,39 @@ public class PostController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<PostListResponse> getPostList(){
-        List<PostResponse> postList = postService.getPostList();
-        PostListResponse postListResponse = PostListResponse.createPostListResponse(postList);
+    public ApiResponse<PostHomeResponse> getPostList(@RequestParam(defaultValue = "RECENT") PostFilter filter, @AuthenticationPrincipal Long userId){
+        System.out.println("filter : " + filter + " userId : " + userId);
+
+        List<PostResponse> postList = null;
+        if(filter == PostFilter.RECENT){
+            postList = postService.getPostListSortByCreatedAt();
+        }else if(filter == PostFilter.POPULAR){
+            postList = postService.getPostListSortByLikeCount();
+        }else if (filter == PostFilter.MINE){
+            postList = postService.getPostListByUserId(userId);
+        }
+        List<MostViewPostResponse> postListSortByViewCount = postService.getPostListSortByViewCount();
+        PostHomeResponse postListResponse = PostHomeResponse.createPostListResponse(postList, postListSortByViewCount);
+
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
     }
+
+//    @GetMapping("/sort/like")
+//    @ResponseStatus(HttpStatus.OK)
+//    public ApiResponse<PostListResponse> getPostListByLikeCount(){
+//        List<PostResponse> postListSortByLikeCount = postService.getPostListSortByLikeCount();
+//        PostListResponse postListResponse = new PostListResponse(postListSortByLikeCount);
+//        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
+//    }
+//
+//    @GetMapping("/sort/mine")
+//    @ResponseStatus(HttpStatus.OK)
+//    public ApiResponse<PostListResponse> getPostListOfMine(@AuthenticationPrincipal Long userId){
+//        List<PostResponse> postListSortByLikeCount = postService.getPostListByUserId(userId);
+//        PostListResponse postListResponse = new PostListResponse(postListSortByLikeCount);
+//        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
+//    }
+
 
     @PatchMapping("/{postId}")
     @ResponseStatus(HttpStatus.OK)

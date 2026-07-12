@@ -1,9 +1,6 @@
 package kr.ktb.finn_week6.domain.post.dto.response;
 
-import kr.ktb.finn_week6.domain.post.Post;
-
 import java.util.List;
-
 
 public record PostListResponse(
         List<PostResponse> posts

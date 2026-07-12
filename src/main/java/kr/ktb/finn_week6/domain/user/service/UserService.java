@@ -165,7 +165,7 @@ public class UserService {
         );
 
         return new TokenResult(
-                new TokenInfo(newAccessToken, 3600),
+                new TokenInfo(newAccessToken, jwtProvider.getAccessTokenValidityInMilliseconds()),
                 newRefreshToken
         );
     }

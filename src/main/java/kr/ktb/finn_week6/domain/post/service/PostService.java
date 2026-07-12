@@ -59,8 +59,35 @@ public class PostService {
         return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, like);
     }
 
-    public List<PostResponse> getPostList(){
+    public List<PostResponse> getPostListSortByCreatedAt(){
         List<Post> postList = postRepository.findPostsOrderByCreatedAtDesc();
+        List<PostResponse> postResponses = new ArrayList<>();
+        for(Post post : postList){
+            postResponses.add(PostResponse.createPostResponse(post));
+        }
+        return postResponses;
+    }
+
+    public List<MostViewPostResponse> getPostListSortByViewCount(){
+        List<MostViewPostResponse> postList = postRepository.findPostsOrderByViewCountDesc();
+        List<MostViewPostResponse> postResponses = new ArrayList<>();
+        for(MostViewPostResponse post : postList){
+            postResponses.add(MostViewPostResponse.createMostViewPostResponse(post.title(),post.username()));
+        }
+        return postResponses;
+    }
+
+    public List<PostResponse> getPostListSortByLikeCount(){
+        List<Post> postList = postRepository.findPostsOrderByLikeCountDesc();
+        List<PostResponse> postResponses = new ArrayList<>();
+        for(Post post : postList){
+            postResponses.add(PostResponse.createPostResponse(post));
+        }
+        return postResponses;
+    }
+
+    public List<PostResponse> getPostListByUserId(Long userId){
+        List<Post> postList = postRepository.findPostsByUserId(userId);
         List<PostResponse> postResponses = new ArrayList<>();
         for(Post post : postList){
             postResponses.add(PostResponse.createPostResponse(post));

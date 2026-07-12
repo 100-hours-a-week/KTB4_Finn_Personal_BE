@@ -568,6 +568,8 @@ class UserServiceTest {
                 .thenReturn("newAccessToken");
         when(jwtProvider.createRefreshToken(user.getId()))
                 .thenReturn("newRefreshToken");
+        when(jwtProvider.getAccessTokenValidityInMilliseconds())
+                .thenReturn(3_600_000L);
 
         // when
         TokenResult result = userService.refreshAccessToken(refreshToken);
@@ -590,7 +592,7 @@ class UserServiceTest {
         assertThat(newSavedRefreshToken.getExpiredAt()).isAfter(LocalDateTime.now());
 
         assertThat(result.getToken().getAccessToken()).isEqualTo("newAccessToken");
-        assertThat(result.getToken().getExpiresIn()).isEqualTo(3600);
+        assertThat(result.getToken().getExpiresIn()).isEqualTo(3_600_000L);
         assertThat(result.getNewRefreshToken()).isEqualTo("newRefreshToken");
     }
 
