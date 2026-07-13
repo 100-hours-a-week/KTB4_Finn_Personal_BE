@@ -69,12 +69,7 @@ public class PostService {
     }
 
     public List<MostViewPostResponse> getPostListSortByViewCount(){
-        List<MostViewPostResponse> postList = postRepository.findPostsOrderByViewCountDesc();
-        List<MostViewPostResponse> postResponses = new ArrayList<>();
-        for(MostViewPostResponse post : postList){
-            postResponses.add(MostViewPostResponse.createMostViewPostResponse(post.title(),post.username()));
-        }
-        return postResponses;
+        return postRepository.findPostsOrderByViewCountDesc();
     }
 
     public List<PostResponse> getPostListSortByLikeCount(){

@@ -46,6 +46,7 @@ public class PostRepository {
         return queryFactory
                 .select(Projections.constructor(
                         MostViewPostResponse.class,
+                        post.id,
                         post.title,
                         post.user.nickname
                 ))

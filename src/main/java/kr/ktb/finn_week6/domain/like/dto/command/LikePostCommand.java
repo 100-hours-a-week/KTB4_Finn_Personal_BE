@@ -1,7 +1,7 @@
 package kr.ktb.finn_week6.domain.like.dto.command;
 
 public record LikePostCommand(
-        Long sessionUserId,
+        Long userId,
         Long postId
 ) {
     public static LikePostCommand createLikePostCommand(Long userId, Long postId) {

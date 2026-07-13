@@ -27,38 +27,38 @@ public class LikeService {
 
     @Transactional
     public LikeResponse likePost(LikePostCommand command){
-        User user = userRepository.findById(command.sessionUserId()).orElseThrow(
+        User user = userRepository.findById(command.userId()).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_USER.getDescription())
         );
         Post post = postRepository.findById(command.postId()).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_POST.getDescription())
         );
-        Like like = likeRepository.findByPostIdAndUserId(command.postId(), command.sessionUserId()).orElse(null);
+        Like like = likeRepository.findByPostIdAndUserId(command.postId(), command.userId()).orElse(null);
 
         if (like != null) {
 
             if (!like.isDeleted()) {
                 throw new IllegalResourceStateException(RequestMessage.ALREADY_LIKED.getDescription());
             }
-
             like.recovered();
-
         } else {
             like = new Like(user, post);
             likeRepository.save(like);
         }
         post.increaseLikeCount();
-        return new LikeResponse(like.getId());
+        return new LikeResponse(like.getId(),true ,like.getPost().getLikeCount());
     }
 
     @Transactional
-    public void deleteLike(Long likeId, Long sessionUserId){
-        Like like = likeRepository.findById(likeId).orElseThrow(
+        public LikeResponse deleteLike(LikePostCommand command){
+        Like like = likeRepository.findByPostIdAndUserId(command.postId(), command.userId()).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND.getDescription())
         );
-        permissionValidator.validatePermission(like.getUser().getId(), sessionUserId);
+        permissionValidator.validatePermission(like.getUser().getId(), command.userId());
         like.setDeleted();
         like.getPost().decreaseLikeCount();
+
+        return new LikeResponse(like.getId(),false, like.getPost().getLikeCount());
     }
 
 }

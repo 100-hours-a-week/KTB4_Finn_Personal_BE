@@ -7,9 +7,11 @@ import kr.ktb.finn_week6.domain.comment.dto.response.CommentDetailResponse;
 import kr.ktb.finn_week6.domain.comment.dto.response.CommentListResponse;
 import kr.ktb.finn_week6.domain.comment.dto.response.CreateCommentResponse;
 import kr.ktb.finn_week6.domain.comment.service.CommentService;
+import kr.ktb.finn_week6.domain.like.Like;
 import kr.ktb.finn_week6.domain.like.dto.command.LikePostCommand;
 import kr.ktb.finn_week6.domain.like.dto.response.LikeResponse;
 import kr.ktb.finn_week6.domain.like.service.LikeService;
+import kr.ktb.finn_week6.domain.post.Post;
 import kr.ktb.finn_week6.domain.post.dto.command.CreatePostCommand;
 import kr.ktb.finn_week6.domain.post.dto.command.UpdatePostCommand;
 import kr.ktb.finn_week6.domain.post.dto.enums.PostFilter;
@@ -19,6 +21,7 @@ import kr.ktb.finn_week6.domain.post.dto.response.*;
 import kr.ktb.finn_week6.domain.post.service.PostService;
 import kr.ktb.finn_week6.global.RequestMessage;
 import kr.ktb.finn_week6.global.dto.ApiResponse;
+import kr.ktb.finn_week6.security.auth.LoginUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -62,8 +65,8 @@ public class PostController {
         }else if (filter == PostFilter.MINE){
             postList = postService.getPostListByUserId(userId);
         }
-        List<MostViewPostResponse> postListSortByViewCount = postService.getPostListSortByViewCount();
-        PostHomeResponse postListResponse = PostHomeResponse.createPostListResponse(postList, postListSortByViewCount);
+        List<MostViewPostResponse> mostViewPostResponses = postService.getPostListSortByViewCount();
+        PostHomeResponse postListResponse = PostHomeResponse.createPostListResponse(postList, mostViewPostResponses);
 
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
     }
@@ -122,6 +125,14 @@ public class PostController {
         LikePostCommand likePostCommand = LikePostCommand.createLikePostCommand(userId, postId);
         LikeResponse likeResponseDto = likeService.likePost(likePostCommand);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), likeResponseDto);
+    }
+
+    @DeleteMapping("/{postId}/like")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<LikeResponse> unLikePost(@PathVariable Long postId, @AuthenticationPrincipal Long userId){
+        LikePostCommand command = LikePostCommand.createLikePostCommand(userId, postId);
+        LikeResponse likeResponse = likeService.deleteLike(command);
+        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), likeResponse);
     }
 
 }
