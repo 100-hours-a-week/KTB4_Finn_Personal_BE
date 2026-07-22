@@ -97,12 +97,9 @@ public class PostService {
         Post post = postRepository.findById(command.postId()).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_POST.getDescription())
         );
-        String targetImg = post.getContentImg();
-        if(command.contentImg() != null){
-            targetImg = command.contentImg();
-        }
-        permissionValidator.validatePermission(post.getUser().getId(), command.loginUserId());
-        post.updatePost(command.title(),command.content(), targetImg);
+
+        permissionValidator.validatePermission(post.getUser().getId(), command.userId());
+        post.updatePost(command.title(),command.content(), command.contentImg());
 
         return  UpdatePostResponse.createResponse(post);
     }
