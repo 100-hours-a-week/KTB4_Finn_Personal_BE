@@ -11,6 +11,7 @@ public record CreatePostRequest(
         String title,
         @NotBlank(message = "Content is required")
         String content,
+        @NotBlank(message = "ContentImg is required")
         @URL(message = "Content image must be a valid URL")
         String contentImg
 ) {

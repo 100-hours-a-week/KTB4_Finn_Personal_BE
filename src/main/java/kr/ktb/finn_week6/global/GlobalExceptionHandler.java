@@ -34,6 +34,13 @@ public class GlobalExceptionHandler {
                 .body(new ApiResponse<>(message,null));
     }
 
+    @ExceptionHandler(CurrentPasswordMismatch.class)
+    public ResponseEntity<ApiResponse<Void>> handleCurrentPasswordMismatch(CurrentPasswordMismatch e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(e.getMessage(),null));
+    }
+
     //401
     @ExceptionHandler(UnauthenticatedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(UnauthenticatedException e){

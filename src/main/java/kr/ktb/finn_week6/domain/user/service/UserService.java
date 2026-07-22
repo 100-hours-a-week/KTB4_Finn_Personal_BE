@@ -116,7 +116,11 @@ public class UserService {
         if(targetUser.isDeleted()){
             throw new DeletedUserException(RequestMessage.NOT_FOUND.getDescription());
         }
-        String encodedPassword = passwordEncoder.encode(command.password());
+        if(!passwordEncoder.matches(command.currentPassword(), targetUser.getPassword())){
+            throw new CurrentPasswordMismatch(RequestMessage.INVALID_PASSWORD.getDescription());
+        }
+
+        String encodedPassword = passwordEncoder.encode(command.newPassword());
         targetUser.updatePassword(encodedPassword);
     }
 

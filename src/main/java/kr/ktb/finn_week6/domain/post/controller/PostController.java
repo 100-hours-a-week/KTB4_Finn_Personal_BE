@@ -55,13 +55,11 @@ public class PostController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<PostHomeResponse> getPostList(@RequestParam(defaultValue = "RECENT") PostFilter filter, @AuthenticationPrincipal Long userId){
-        System.out.println("filter : " + filter + " userId : " + userId);
-
         List<PostResponse> postList = null;
         if(filter == PostFilter.RECENT){
-            postList = postService.getPostListSortByCreatedAt();
+            postList = postService.getPostListSortByCreatedAt(userId);
         }else if(filter == PostFilter.POPULAR){
-            postList = postService.getPostListSortByLikeCount();
+            postList = postService.getPostListSortByLikeCount(userId);
         }else if (filter == PostFilter.MINE){
             postList = postService.getPostListByUserId(userId);
         }

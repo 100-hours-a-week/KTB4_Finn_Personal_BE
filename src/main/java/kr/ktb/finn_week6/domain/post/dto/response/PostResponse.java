@@ -12,11 +12,12 @@ public record PostResponse(
         String contentImg,
         String nickname,
         String profileImg,
+        boolean isLiked,
         int likeCount,
         int commentCount,
         int viewCount
 ) {
-    public static PostResponse createPostResponse(Post post){
+    public static PostResponse createPostResponse(Post post, boolean isLiked) {
         return new PostResponse(
                 post.getId(),
                 post.getTitle(),
@@ -25,6 +26,7 @@ public record PostResponse(
                 post.getContentImg(),
                 post.getUser().getNickname(),
                 post.getUser().getProfileImg(),
+                isLiked,
                 post.getLikeCount(),
                 post.getCommentCount(),
                 post.getViewCount());

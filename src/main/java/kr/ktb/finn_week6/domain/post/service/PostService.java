@@ -59,35 +59,41 @@ public class PostService {
         return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, like);
     }
 
-    public List<PostResponse> getPostListSortByCreatedAt(){
+    public List<PostResponse> getPostListSortByCreatedAt(Long userId){
         List<Post> postList = postRepository.findPostsOrderByCreatedAtDesc();
-        List<PostResponse> postResponses = new ArrayList<>();
-        for(Post post : postList){
-            postResponses.add(PostResponse.createPostResponse(post));
-        }
-        return postResponses;
+        return postList.stream().map(
+                post -> {
+                    boolean isLiked =
+                    likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
+                    return PostResponse.createPostResponse(post, isLiked);
+                }
+        ).toList();
     }
 
     public List<MostViewPostResponse> getPostListSortByViewCount(){
         return postRepository.findPostsOrderByViewCountDesc();
     }
 
-    public List<PostResponse> getPostListSortByLikeCount(){
+    public List<PostResponse> getPostListSortByLikeCount(Long userId){
         List<Post> postList = postRepository.findPostsOrderByLikeCountDesc();
-        List<PostResponse> postResponses = new ArrayList<>();
-        for(Post post : postList){
-            postResponses.add(PostResponse.createPostResponse(post));
-        }
-        return postResponses;
+        return postList.stream().map(
+                post -> {
+                    boolean isLiked =
+                            likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
+                    return PostResponse.createPostResponse(post, isLiked);
+                }
+        ).toList();
     }
 
     public List<PostResponse> getPostListByUserId(Long userId){
         List<Post> postList = postRepository.findPostsByUserId(userId);
-        List<PostResponse> postResponses = new ArrayList<>();
-        for(Post post : postList){
-            postResponses.add(PostResponse.createPostResponse(post));
-        }
-        return postResponses;
+        return postList.stream().map(
+                post -> {
+                    boolean isLiked =
+                            likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
+                    return PostResponse.createPostResponse(post, isLiked);
+                }
+        ).toList();
     }
 
 
