@@ -55,8 +55,8 @@ public class PostService {
 
         boolean isPostAuthor = post.getUser().getId().equals(sessionUserId);
         Like like = likeRepository.findUndeletedByPostIdAndUserId(postId, sessionUserId).orElse(null);
-
-        return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, like);
+        boolean isLiked = like != null;
+        return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, isLiked);
     }
 
     public List<PostResponse> getPostListSortByCreatedAt(Long userId){

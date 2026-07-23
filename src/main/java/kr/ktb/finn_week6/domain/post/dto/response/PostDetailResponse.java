@@ -19,9 +19,9 @@ public record PostDetailResponse(
         int viewCount,
         int commentCount,
         boolean isMine,
-        Like like
+        boolean isLiked
 ) {
-    public static PostDetailResponse createPostDetailResponse(Post post, boolean isMine, Like like){
+    public static PostDetailResponse createPostDetailResponse(Post post, boolean isMine, boolean isLiked){
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),
@@ -34,7 +34,7 @@ public record PostDetailResponse(
                 post.getViewCount(),
                 post.getCommentCount(),
                 isMine,
-                like
+                isLiked
         );
 
     }
