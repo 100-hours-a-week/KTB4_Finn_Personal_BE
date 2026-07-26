@@ -397,7 +397,7 @@ class UserServiceTest {
     @DisplayName("비밀번호 수정 시, 해당 유저 없으면 NotFoundException 발생한다.")
     void updatePasswordUserNotFound() {
         //given
-        UpdatePasswordCommand command = new UpdatePasswordCommand(1L, "newPassword");
+        UpdatePasswordCommand command = new UpdatePasswordCommand(1L, "currentPassword", "newPassword");
         when(userRepository.findById(command.loginUserId())).thenReturn(Optional.empty());
 
         //when & then
@@ -409,7 +409,7 @@ class UserServiceTest {
     @DisplayName("비밀번호 수정 시, 해당 유저 탈퇴했으면 DeletedUserException 발생한다.")
     void updatePasswordUserDeleted() {
         //given
-        UpdatePasswordCommand command = new UpdatePasswordCommand(1L, "newPassword");
+        UpdatePasswordCommand command = new UpdatePasswordCommand(1L, "currentPassword","newPassword");
         User user = new User(
                 "TestUser",
                 "test@test.com",
@@ -426,25 +426,67 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("비밀번호 수정 시, 해당 유저 존재하면 비밀번호 수정")
-    void updatePasswordUserFound() {
-        //given
-        UpdatePasswordCommand command = new UpdatePasswordCommand(1L, "newPassword");
+    @DisplayName("현재 비밀번호가 일치하지 않으면 비밀번호를 변경하지 않는다.")
+    void updatePasswordCurrentPasswordMismatch() {
+        UpdatePasswordCommand command =
+                new UpdatePasswordCommand(1L, "wrongPassword", "newPassword");
+
         User user = new User(
                 "TestUser",
                 "test@test.com",
-                "oldPassword",
+                "encodedCurrentPassword",
                 "https://test.com/test.png"
         );
-        when(userRepository.findById(command.loginUserId())).thenReturn(Optional.of(user));
-        when(passwordEncoder.encode(command.password())).thenReturn("encodedPassword");
-        //when
+
+        when(userRepository.findById(command.loginUserId()))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(
+                command.currentPassword(),
+                user.getPassword()
+        )).thenReturn(false);
+
+        assertThrows(
+                CurrentPasswordMismatch.class,
+                () -> userService.updatePassword(command)
+        );
+
+        assertThat(user.getPassword()).isEqualTo("encodedCurrentPassword");
+        verify(passwordEncoder, never()).encode(anyString());
+    }
+    @Test
+    @DisplayName("현재 비밀번호가 일치하면 새로운 비밀번호로 변경한다.")
+    void updatePasswordSuccess() {
+        UpdatePasswordCommand command =
+                new UpdatePasswordCommand(1L, "currentPassword", "newPassword");
+
+        User user = new User(
+                "TestUser",
+                "test@test.com",
+                "encodedCurrentPassword",
+                "https://test.com/test.png"
+        );
+
+        when(userRepository.findById(command.loginUserId()))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(
+                command.currentPassword(),
+                user.getPassword()
+        )).thenReturn(true);
+
+        when(passwordEncoder.encode(command.newPassword()))
+                .thenReturn("encodedNewPassword");
+
         userService.updatePassword(command);
 
-        //then
-        assertThat(user.getPassword()).isEqualTo("encodedPassword");
-        verify(userRepository).findById(command.loginUserId());
-        verify(passwordEncoder).encode(command.password());
+        assertThat(user.getPassword()).isEqualTo("encodedNewPassword");
+
+        verify(passwordEncoder).matches(
+                command.currentPassword(),
+                "encodedCurrentPassword"
+        );
+        verify(passwordEncoder).encode(command.newPassword());
     }
 
     @Test
