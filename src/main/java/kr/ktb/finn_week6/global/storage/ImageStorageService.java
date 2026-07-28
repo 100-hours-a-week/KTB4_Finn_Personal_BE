@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Service
 public class ImageStorageService {
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE = 15 * 1024 * 1024;
     private static final Set<String> ALLOWED_DOMAINS = Set.of("users", "posts");
     private static final Map<String, String> EXTENSIONS_BY_CONTENT_TYPE = Map.of(
             "image/jpeg", ".jpg",

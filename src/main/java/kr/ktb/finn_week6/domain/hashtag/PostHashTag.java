@@ -5,7 +5,15 @@ import kr.ktb.finn_week6.domain.post.Post;
 import lombok.Getter;
 
 @Entity
-@Table(name = "PostHashTags")
+@Table(
+        name = "PostHashTags",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_post_hashtag",
+                        columnNames = {"post_id", "hashtag_id"}
+                )
+        }
+)
 @Getter
 public class PostHashTag {
 
