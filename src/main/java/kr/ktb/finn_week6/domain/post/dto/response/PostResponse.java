@@ -3,6 +3,7 @@ package kr.ktb.finn_week6.domain.post.dto.response;
 import kr.ktb.finn_week6.domain.post.Post;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record PostResponse(
         Long id,
@@ -15,9 +16,10 @@ public record PostResponse(
         boolean isLiked,
         int likeCount,
         int commentCount,
-        int viewCount
+        int viewCount,
+        List<String> tagNames
 ) {
-    public static PostResponse createPostResponse(Post post, boolean isLiked) {
+    public static PostResponse createPostResponse(Post post, boolean isLiked, List<String> tagNames) {
         return new PostResponse(
                 post.getId(),
                 post.getTitle(),
@@ -29,7 +31,9 @@ public record PostResponse(
                 isLiked,
                 post.getLikeCount(),
                 post.getCommentCount(),
-                post.getViewCount());
+                post.getViewCount(),
+                tagNames
+        );
     }
 
 }

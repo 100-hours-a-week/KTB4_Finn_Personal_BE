@@ -2,6 +2,8 @@ package kr.ktb.finn_week6.domain.post.service;
 
 import kr.ktb.finn_week6.domain.comment.Comment;
 import kr.ktb.finn_week6.domain.comment.repository.CommentRepository;
+import kr.ktb.finn_week6.domain.hashtag.HashTag;
+import kr.ktb.finn_week6.domain.hashtag.service.HashTagService;
 import kr.ktb.finn_week6.domain.like.Like;
 import kr.ktb.finn_week6.domain.like.repository.LikeRepository;
 import kr.ktb.finn_week6.domain.post.Post;
@@ -16,6 +18,7 @@ import kr.ktb.finn_week6.global.RequestMessage;
 import kr.ktb.finn_week6.global.customException.IllegalResourceStateException;
 import kr.ktb.finn_week6.global.dto.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,15 +34,20 @@ public class PostService {
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final PermissionValidator permissionValidator;
+    private final HashTagService hashTagService;
 
     @Transactional
     public CreatePostResponse register(CreatePostCommand command){
         User user = userRepository.findById(command.userId()).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_USER.getDescription())
         );
-        Post post = new Post(user, command.title(), command.content(), command.contentImg());
-        Post savedPost = postRepository.save(post);
-        return CreatePostResponse.createPostResponse(savedPost);
+        Post post = postRepository.save(
+                new Post(user, command.title(), command.content(), command.contentImg())
+        );
+
+        hashTagService.registerPostTags(post, command.tags());
+
+        return CreatePostResponse.createPostResponse(post);
     }
 
     @Transactional
@@ -56,18 +64,19 @@ public class PostService {
         boolean isPostAuthor = post.getUser().getId().equals(sessionUserId);
         Like like = likeRepository.findUndeletedByPostIdAndUserId(postId, sessionUserId).orElse(null);
         boolean isLiked = like != null;
-        return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, isLiked);
+
+        List<HashTag> hashTags = hashTagService.findTagsByPostId(postId);
+        List<String> tagNames = new ArrayList<>();
+        for (HashTag hashTag : hashTags) {
+            tagNames.add(hashTag.getTagName());
+            System.out.println(hashTag.getTagName());
+        }
+        return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, isLiked, tagNames);
     }
 
     public List<PostResponse> getPostListSortByCreatedAt(Long userId){
         List<Post> postList = postRepository.findPostsOrderByCreatedAtDesc();
-        return postList.stream().map(
-                post -> {
-                    boolean isLiked =
-                    likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
-                    return PostResponse.createPostResponse(post, isLiked);
-                }
-        ).toList();
+        return getPostResponses(userId, postList);
     }
 
     public List<MostViewPostResponse> getPostListSortByViewCount(){
@@ -76,26 +85,29 @@ public class PostService {
 
     public List<PostResponse> getPostListSortByLikeCount(Long userId){
         List<Post> postList = postRepository.findPostsOrderByLikeCountDesc();
-        return postList.stream().map(
-                post -> {
-                    boolean isLiked =
-                            likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
-                    return PostResponse.createPostResponse(post, isLiked);
-                }
-        ).toList();
+        return getPostResponses(userId, postList);
     }
 
     public List<PostResponse> getPostListByUserId(Long userId){
         List<Post> postList = postRepository.findPostsByUserId(userId);
+        return getPostResponses(userId, postList);
+    }
+
+    @NonNull
+    private List<PostResponse> getPostResponses(Long userId, List<Post> postList) {
         return postList.stream().map(
                 post -> {
-                    boolean isLiked =
-                            likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
-                    return PostResponse.createPostResponse(post, isLiked);
+                    boolean isLiked = likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
+                    List<HashTag> hashTags = hashTagService.findTagsByPostId(post.getId());
+                    List<String> tagNames = new ArrayList<>();
+                    for (HashTag hashTag : hashTags) {
+                        tagNames.add(hashTag.getTagName());
+                        System.out.println(hashTag.getTagName());
+                    }
+                    return PostResponse.createPostResponse(post, isLiked,tagNames);
                 }
         ).toList();
     }
-
 
 
     @Transactional

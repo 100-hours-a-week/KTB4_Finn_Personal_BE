@@ -21,4 +21,13 @@ public class HashTag {
 
     @Column(name = "tag_name", nullable = false)
     private String tagName;
+
+    public HashTag() {
+    }
+
+    public HashTag(String tagName) {
+        this.tagName = tagName;
+    }
 }
+
+

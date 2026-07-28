@@ -63,8 +63,7 @@ public class PostController {
         }else if (filter == PostFilter.MINE){
             postList = postService.getPostListByUserId(userId);
         }
-        List<MostViewPostResponse> mostViewPostResponses = postService.getPostListSortByViewCount();
-        PostHomeResponse postListResponse = PostHomeResponse.createPostListResponse(postList, mostViewPostResponses);
+        PostHomeResponse postListResponse = PostHomeResponse.createPostListResponse(postList);
 
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
     }

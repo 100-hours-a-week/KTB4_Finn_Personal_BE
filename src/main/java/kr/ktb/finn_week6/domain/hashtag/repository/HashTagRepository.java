@@ -13,8 +13,9 @@ import java.util.Optional;
 public class HashTagRepository {
     private final EntityManager em;
 
-    public void save(HashTag hashTag){
+    public HashTag save(HashTag hashTag){
         em.persist(hashTag);
+        return hashTag;
     }
 
     public Optional<HashTag> findById(Long id){

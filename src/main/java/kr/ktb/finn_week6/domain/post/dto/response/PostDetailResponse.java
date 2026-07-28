@@ -1,6 +1,7 @@
 package kr.ktb.finn_week6.domain.post.dto.response;
 
 import kr.ktb.finn_week6.domain.comment.dto.response.CommentDetailResponse;
+import kr.ktb.finn_week6.domain.hashtag.HashTag;
 import kr.ktb.finn_week6.domain.like.Like;
 import kr.ktb.finn_week6.domain.post.Post;
 
@@ -19,9 +20,10 @@ public record PostDetailResponse(
         int viewCount,
         int commentCount,
         boolean isMine,
-        boolean isLiked
+        boolean isLiked,
+        List<String> tagNames
 ) {
-    public static PostDetailResponse createPostDetailResponse(Post post, boolean isMine, boolean isLiked){
+    public static PostDetailResponse createPostDetailResponse(Post post, boolean isMine, boolean isLiked, List<String> tagNames) {
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),
@@ -34,7 +36,8 @@ public record PostDetailResponse(
                 post.getViewCount(),
                 post.getCommentCount(),
                 isMine,
-                isLiked
+                isLiked,
+                tagNames
         );
 
     }

@@ -28,4 +28,12 @@ public class PostHashTag {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hashtag_id")
     private HashTag hashtag;
+
+    public PostHashTag() {
+    }
+
+    public PostHashTag(Post post, HashTag hashtag) {
+        this.post = post;
+        this.hashtag = hashtag;
+    }
 }

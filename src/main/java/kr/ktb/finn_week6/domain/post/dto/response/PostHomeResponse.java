@@ -4,10 +4,9 @@ import java.util.List;
 
 
 public record PostHomeResponse(
-        List<PostResponse> posts,
-        List<MostViewPostResponse> mostViewPosts
+        List<PostResponse> posts
 ) {
-    public static PostHomeResponse createPostListResponse(List<PostResponse> postResponses, List<MostViewPostResponse> mostViewPosts){
-        return new PostHomeResponse(postResponses, mostViewPosts);
+    public static PostHomeResponse createPostListResponse(List<PostResponse> postResponses){
+        return new PostHomeResponse(postResponses);
     }
 }
