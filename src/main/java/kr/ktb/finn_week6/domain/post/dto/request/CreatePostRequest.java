@@ -17,8 +17,9 @@ public record CreatePostRequest(
         @URL(message = "Content image must be a valid URL")
         String contentImg,
 
-        @Size(max = 20, message = "Tag must be less than 26 characters")
-        List<String> tags
+        @Size(max = 5, message = "Tags must be less than 5")
+        List<@NotBlank @Size(max = 20, message = "Tag must be less than 20")
+                String> tags
 ) {
 
     public CreatePostCommand createPostCommand(Long userId){

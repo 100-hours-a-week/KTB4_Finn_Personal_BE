@@ -3,7 +3,9 @@ package kr.ktb.finn_week6.domain.post.service;
 import kr.ktb.finn_week6.domain.comment.Comment;
 import kr.ktb.finn_week6.domain.comment.repository.CommentRepository;
 import kr.ktb.finn_week6.domain.hashtag.HashTag;
+import kr.ktb.finn_week6.domain.hashtag.repository.HashTagRepository;
 import kr.ktb.finn_week6.domain.hashtag.service.HashTagService;
+import kr.ktb.finn_week6.domain.hashtag.service.PostHashTagService;
 import kr.ktb.finn_week6.domain.like.Like;
 import kr.ktb.finn_week6.domain.like.repository.LikeRepository;
 import kr.ktb.finn_week6.domain.post.Post;
@@ -35,6 +37,7 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final PermissionValidator permissionValidator;
     private final HashTagService hashTagService;
+    private final PostHashTagService postHashTagService;
 
     @Transactional
     public CreatePostResponse register(CreatePostCommand command){
@@ -69,7 +72,6 @@ public class PostService {
         List<String> tagNames = new ArrayList<>();
         for (HashTag hashTag : hashTags) {
             tagNames.add(hashTag.getTagName());
-            System.out.println(hashTag.getTagName());
         }
         return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, isLiked, tagNames);
     }
@@ -92,34 +94,16 @@ public class PostService {
         List<Post> postList = postRepository.findPostsByUserId(userId);
         return getPostResponses(userId, postList);
     }
-
-    @NonNull
-    private List<PostResponse> getPostResponses(Long userId, List<Post> postList) {
-        return postList.stream().map(
-                post -> {
-                    boolean isLiked = likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
-                    List<HashTag> hashTags = hashTagService.findTagsByPostId(post.getId());
-                    List<String> tagNames = new ArrayList<>();
-                    for (HashTag hashTag : hashTags) {
-                        tagNames.add(hashTag.getTagName());
-                        System.out.println(hashTag.getTagName());
-                    }
-                    return PostResponse.createPostResponse(post, isLiked,tagNames);
-                }
-        ).toList();
-    }
-
-
     @Transactional
     public UpdatePostResponse updatePost(UpdatePostCommand command){
         Post post = postRepository.findById(command.postId()).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_POST.getDescription())
         );
-
         permissionValidator.validatePermission(post.getUser().getId(), command.userId());
         post.updatePost(command.title(),command.content(), command.contentImg());
 
-        return  UpdatePostResponse.createResponse(post);
+        List<String> updatedTags = postHashTagService.updatePostTags(post, command.tags());
+        return  UpdatePostResponse.createResponse(post, updatedTags);
     }
 
     @Transactional
@@ -141,6 +125,23 @@ public class PostService {
             like.setDeleted();
             like.getPost().decreaseLikeCount();
         }
+    }
+
+
+
+    @NonNull
+    private List<PostResponse> getPostResponses(Long userId, List<Post> postList) {
+        return postList.stream().map(
+                post -> {
+                    boolean isLiked = likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
+                    List<HashTag> hashTags = hashTagService.findTagsByPostId(post.getId());
+                    List<String> tagNames = new ArrayList<>();
+                    for (HashTag hashTag : hashTags) {
+                        tagNames.add(hashTag.getTagName());
+                    }
+                    return PostResponse.createPostResponse(post, isLiked,tagNames);
+                }
+        ).toList();
     }
 
 }

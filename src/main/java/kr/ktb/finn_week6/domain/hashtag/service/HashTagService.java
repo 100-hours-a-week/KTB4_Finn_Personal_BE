@@ -1,5 +1,6 @@
 package kr.ktb.finn_week6.domain.hashtag.service;
 
+import jakarta.transaction.Transactional;
 import kr.ktb.finn_week6.domain.hashtag.HashTag;
 import kr.ktb.finn_week6.domain.hashtag.PostHashTag;
 import kr.ktb.finn_week6.domain.hashtag.repository.HashTagRepository;
@@ -18,8 +19,9 @@ public class HashTagService {
     private final HashTagRepository hashTagRepository;
     private final PostHashtagRepository postHashtagRepository;
 
-    public void registerPostTags(Post post, List<String> tags){
-        if(tags==null || tags.isEmpty()){
+    @Transactional
+    public void registerPostTags(Post post, List<String> tags) {
+        if (tags == null || tags.isEmpty()) {
             return;
         }
         List<String> normalizedTags = tags.stream()
@@ -47,4 +49,5 @@ public class HashTagService {
         }
         return hashTags;
     }
+
 }
