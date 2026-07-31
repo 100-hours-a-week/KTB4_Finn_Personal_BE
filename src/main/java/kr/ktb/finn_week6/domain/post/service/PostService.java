@@ -10,6 +10,7 @@ import kr.ktb.finn_week6.domain.like.Like;
 import kr.ktb.finn_week6.domain.like.repository.LikeRepository;
 import kr.ktb.finn_week6.domain.post.Post;
 import kr.ktb.finn_week6.domain.post.dto.command.CreatePostCommand;
+import kr.ktb.finn_week6.domain.post.dto.command.PostSearchCommand;
 import kr.ktb.finn_week6.domain.post.dto.command.UpdatePostCommand;
 import kr.ktb.finn_week6.domain.post.dto.response.*;
 import kr.ktb.finn_week6.domain.post.repository.PostRepository;
@@ -81,6 +82,11 @@ public class PostService {
         return getPostResponses(userId, postList);
     }
 
+    public List<PostResponse> getPostListBySearchTag(PostSearchCommand command){
+        validateSearchTagCondition(command);
+        List<Post> postsBySearchTag = postRepository.findPostsBySearchTag(command);
+        return getPostResponses(command.userId(), postsBySearchTag);
+    }
     public List<MostViewPostResponse> getPostListSortByViewCount(){
         return postRepository.findPostsOrderByViewCountDesc();
     }
@@ -142,6 +148,30 @@ public class PostService {
                     return PostResponse.createPostResponse(post, isLiked,tagNames);
                 }
         ).toList();
+    }
+
+    private void validateSearchTagCondition(PostSearchCommand command){
+        if(command.dateFilterType() == null){
+            if(command.targetDate()!= null
+                    || command.startDate()!= null
+                    || command.endDate()!= null) {
+                throw new IllegalArgumentException("날짜 검색 시 dateFilterType 명시 필요");
+            }
+            return;
+        }
+
+        switch(command.dateFilterType()){
+            case SPECIFIC_DATE -> {
+                if(command.targetDate() == null){
+                    throw new IllegalArgumentException("특정 날짜 검색 시 targetDate 필요");
+                }
+            }
+            case CUSTOM_RANGE -> {
+                if(command.startDate() == null ||  command.endDate() == null){
+                    throw new IllegalArgumentException("기간 검색 시 startDate와 endDate 필요");
+                }
+            }
+        }
     }
 
 }

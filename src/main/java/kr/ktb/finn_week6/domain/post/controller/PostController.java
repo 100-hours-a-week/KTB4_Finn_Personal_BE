@@ -7,21 +7,20 @@ import kr.ktb.finn_week6.domain.comment.dto.response.CommentDetailResponse;
 import kr.ktb.finn_week6.domain.comment.dto.response.CommentListResponse;
 import kr.ktb.finn_week6.domain.comment.dto.response.CreateCommentResponse;
 import kr.ktb.finn_week6.domain.comment.service.CommentService;
-import kr.ktb.finn_week6.domain.like.Like;
 import kr.ktb.finn_week6.domain.like.dto.command.LikePostCommand;
 import kr.ktb.finn_week6.domain.like.dto.response.LikeResponse;
 import kr.ktb.finn_week6.domain.like.service.LikeService;
-import kr.ktb.finn_week6.domain.post.Post;
 import kr.ktb.finn_week6.domain.post.dto.command.CreatePostCommand;
+import kr.ktb.finn_week6.domain.post.dto.command.PostSearchCommand;
 import kr.ktb.finn_week6.domain.post.dto.command.UpdatePostCommand;
 import kr.ktb.finn_week6.domain.post.dto.enums.PostFilter;
 import kr.ktb.finn_week6.domain.post.dto.request.CreatePostRequest;
+import kr.ktb.finn_week6.domain.post.dto.request.PostSearchRequest;
 import kr.ktb.finn_week6.domain.post.dto.request.UpdatePostRequest;
 import kr.ktb.finn_week6.domain.post.dto.response.*;
 import kr.ktb.finn_week6.domain.post.service.PostService;
 import kr.ktb.finn_week6.global.RequestMessage;
 import kr.ktb.finn_week6.global.dto.ApiResponse;
-import kr.ktb.finn_week6.security.auth.LoginUserProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,7 +39,7 @@ public class PostController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<CreatePostResponse> registerPost(@Valid @RequestBody CreatePostRequest request, @AuthenticationPrincipal Long userId){
-        CreatePostCommand postCommand = request.createPostCommand(userId);
+        CreatePostCommand postCommand = request.toCommand(userId);
         CreatePostResponse response = postService.register(postCommand);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), response);
     }
@@ -54,7 +53,7 @@ public class PostController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<PostHomeResponse> getPostList(@RequestParam(defaultValue = "RECENT") PostFilter filter, @AuthenticationPrincipal Long userId){
+    public ApiResponse<PostListResponse> getPostList(@RequestParam(defaultValue = "RECENT") PostFilter filter, @AuthenticationPrincipal Long userId){
         List<PostResponse> postList = null;
         if(filter == PostFilter.RECENT){
             postList = postService.getPostListSortByCreatedAt(userId);
@@ -63,9 +62,21 @@ public class PostController {
         }else if (filter == PostFilter.MINE){
             postList = postService.getPostListByUserId(userId);
         }
-        PostHomeResponse postListResponse = PostHomeResponse.createPostListResponse(postList);
+        PostListResponse postListResponse = PostListResponse.createPostListResponse(postList);
 
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
+    }
+
+    @GetMapping("/search")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<PostListResponse> searchPostList(@ModelAttribute PostSearchRequest request, @AuthenticationPrincipal Long userId){
+
+        PostSearchCommand command = request.toCommand(userId);
+        List<PostResponse> postListBySearchTag = postService.getPostListBySearchTag(command);
+
+        PostListResponse postListResponse = PostListResponse.createPostListResponse(postListBySearchTag);
+
+        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(),postListResponse);
     }
 
 //    @GetMapping("/sort/like")
@@ -110,7 +121,6 @@ public class PostController {
         CommentListResponse commentListResponse = CommentListResponse.createCommentListResponse(comments);
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), commentListResponse);
     }
-
     @DeleteMapping("/{postId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePost(@PathVariable Long postId, @AuthenticationPrincipal Long userId){

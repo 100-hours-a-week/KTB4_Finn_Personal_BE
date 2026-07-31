@@ -1,7 +1,6 @@
 package kr.ktb.finn_week6.domain.hashtag.repository;
 
 import jakarta.persistence.EntityManager;
-import kr.ktb.finn_week6.domain.hashtag.HashTag;
 import kr.ktb.finn_week6.domain.hashtag.PostHashTag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

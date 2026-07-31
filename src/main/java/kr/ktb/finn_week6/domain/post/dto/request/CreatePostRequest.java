@@ -22,7 +22,7 @@ public record CreatePostRequest(
                 String> tags
 ) {
 
-    public CreatePostCommand createPostCommand(Long userId){
+    public CreatePostCommand toCommand(Long userId){
         return new CreatePostCommand(userId, title(), content(), contentImg(), tags());
     }
 }
