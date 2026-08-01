@@ -83,7 +83,6 @@ public class PostService {
     }
 
     public List<PostResponse> getPostListBySearchTag(PostSearchCommand command){
-        validateSearchTagCondition(command);
         List<Post> postsBySearchTag = postRepository.findPostsBySearchTag(command);
         return getPostResponses(command.userId(), postsBySearchTag);
     }
@@ -148,30 +147,6 @@ public class PostService {
                     return PostResponse.createPostResponse(post, isLiked,tagNames);
                 }
         ).toList();
-    }
-
-    private void validateSearchTagCondition(PostSearchCommand command){
-        if(command.dateFilterType() == null){
-            if(command.targetDate()!= null
-                    || command.startDate()!= null
-                    || command.endDate()!= null) {
-                throw new IllegalArgumentException("날짜 검색 시 dateFilterType 명시 필요");
-            }
-            return;
-        }
-
-        switch(command.dateFilterType()){
-            case SPECIFIC_DATE -> {
-                if(command.targetDate() == null){
-                    throw new IllegalArgumentException("특정 날짜 검색 시 targetDate 필요");
-                }
-            }
-            case CUSTOM_RANGE -> {
-                if(command.startDate() == null ||  command.endDate() == null){
-                    throw new IllegalArgumentException("기간 검색 시 startDate와 endDate 필요");
-                }
-            }
-        }
     }
 
 }

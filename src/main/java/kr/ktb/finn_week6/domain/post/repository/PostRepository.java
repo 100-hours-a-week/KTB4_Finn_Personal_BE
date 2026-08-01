@@ -10,7 +10,6 @@ import kr.ktb.finn_week6.domain.post.dto.response.MostViewPostResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +57,7 @@ public class PostRepository {
                 .where(
                         post.isDeleted.eq(false),
                         hashTag.tagName.eq(command.tag()),
-                        dateCondition(command)
+                        dateRange(command)
                 )
                 .orderBy(
                         post.createdAt.desc(),
@@ -105,29 +104,11 @@ public class PostRepository {
                 .fetch();
     }
 
-    private BooleanExpression dateCondition(PostSearchCommand command){
-        if(command.dateFilterType() == null){
-            return null;
-        }
+    private BooleanExpression dateRange(PostSearchCommand command) {
+        LocalDateTime start = command.startDate().atStartOfDay();
+        LocalDateTime end = command.endDate().plusDays(1).atStartOfDay();
 
-        LocalDate today = LocalDate.now();
-
-        return switch (command.dateFilterType()){
-            case TODAY -> dateRange(today, today);
-            case LAST_WEEK ->  dateRange(today.minusDays(6), today);
-            case SPECIFIC_DATE -> dateRange(command.targetDate(), command.targetDate());
-            case CUSTOM_RANGE ->  dateRange(command.startDate(), command.endDate());
-        };
-    }
-
-    private BooleanExpression dateRange(LocalDate startDate, LocalDate endDate){
-        if(startDate == null || endDate == null){
-            return null;
-        }
-
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = endDate.plusDays(1).atStartOfDay();
-
-        return post.createdAt.goe(start).and(post.createdAt.lt(end));
+        return post.createdAt.goe(start)
+                .and(post.createdAt.lt(end));
     }
 }
