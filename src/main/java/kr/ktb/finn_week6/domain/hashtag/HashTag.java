@@ -16,7 +16,7 @@ import lombok.Getter;
 @Getter
 public class HashTag {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "tag_name", nullable = false)
