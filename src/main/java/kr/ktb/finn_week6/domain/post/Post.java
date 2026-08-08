@@ -12,8 +12,12 @@ import java.time.LocalDateTime;
         name = "posts",
         indexes = {
                 @Index(
-                        name = "idx_posts_created_at",
-                        columnList = "created_at"
+                        name = "idx_posts_is_deleted_created_at",
+                        columnList = "is_deleted, created_at DESC"
+                ),
+                @Index(
+                        name = "idx_posts_is_deleted_like_count",
+                        columnList = "is_deleted, like_count DESC"
                 )
         }
 )
