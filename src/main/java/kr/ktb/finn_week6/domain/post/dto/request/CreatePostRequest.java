@@ -1,7 +1,9 @@
 package kr.ktb.finn_week6.domain.post.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import kr.ktb.finn_week6.domain.place.dto.request.PostLocationRequest;
 import kr.ktb.finn_week6.domain.post.dto.command.CreatePostCommand;
 import org.hibernate.validator.constraints.URL;
 
@@ -19,10 +21,13 @@ public record CreatePostRequest(
 
         @Size(max = 5, message = "Tags must be less than 5")
         List<@NotBlank @Size(max = 20, message = "Tag must be less than 20")
-                String> tags
+                String> tags,
+
+        @Valid
+        PostLocationRequest location
 ) {
 
     public CreatePostCommand toCommand(Long userId){
-        return new CreatePostCommand(userId, title(), content(), contentImg(), tags());
+        return new CreatePostCommand(userId, title(), content(), contentImg(), tags(), location());
     }
 }

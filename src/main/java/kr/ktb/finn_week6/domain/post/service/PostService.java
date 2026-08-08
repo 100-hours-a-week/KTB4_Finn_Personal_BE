@@ -3,11 +3,13 @@ package kr.ktb.finn_week6.domain.post.service;
 import kr.ktb.finn_week6.domain.comment.Comment;
 import kr.ktb.finn_week6.domain.comment.repository.CommentRepository;
 import kr.ktb.finn_week6.domain.hashtag.HashTag;
-import kr.ktb.finn_week6.domain.hashtag.repository.HashTagRepository;
 import kr.ktb.finn_week6.domain.hashtag.service.HashTagService;
 import kr.ktb.finn_week6.domain.hashtag.service.PostHashTagService;
 import kr.ktb.finn_week6.domain.like.Like;
 import kr.ktb.finn_week6.domain.like.repository.LikeRepository;
+import kr.ktb.finn_week6.domain.place.Place;
+import kr.ktb.finn_week6.domain.place.dto.PostPlaceInfo;
+import kr.ktb.finn_week6.domain.place.repository.PlaceRepository;
 import kr.ktb.finn_week6.domain.post.Post;
 import kr.ktb.finn_week6.domain.post.dto.command.CreatePostCommand;
 import kr.ktb.finn_week6.domain.post.dto.command.PostSearchCommand;
@@ -25,8 +27,8 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -36,17 +38,40 @@ public class PostService {
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final PlaceRepository placeRepository;
+
     private final PermissionValidator permissionValidator;
     private final HashTagService hashTagService;
     private final PostHashTagService postHashTagService;
 
     @Transactional
     public CreatePostResponse register(CreatePostCommand command){
+
+        Place place = null;
+
         User user = userRepository.findById(command.userId()).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_USER.getDescription())
         );
+
+        if (command.location() != null) {
+
+            place = placeRepository
+                    .findByProviderPlaceId(
+                            command.location().providerPlaceId()
+                    )
+                    .orElseGet(() -> placeRepository.save(
+                            new Place(
+                                    command.location().providerPlaceId(),
+                                    command.location().placeName(),
+                                    command.location().roadAddressName(),
+                                    command.location().latitude(),
+                                    command.location().longitude()
+                            )
+                    ));
+        }
+
         Post post = postRepository.save(
-                new Post(user, command.title(), command.content(), command.contentImg())
+                new Post(user, command.title(), command.content(), command.contentImg(), place)
         );
 
         hashTagService.registerPostTags(post, command.tags());
@@ -59,22 +84,30 @@ public class PostService {
         Post post = postRepository.findById(postId).orElseThrow(
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_POST.getDescription())
         );
-        post.updateViewCount();
 
         if(post.isDeleted()){
             throw new IllegalResourceStateException(RequestMessage.RESOURCE_DELETED.getDescription());
         }
 
+        post.updateViewCount();
+
+        PostPlaceInfo postLocationResponse = null;
+        Place place = post.getPlace();
+
+        if (place != null) {
+            postLocationResponse =
+                    PostPlaceInfo.createPostLocationResponse(place);
+        }
+
         boolean isPostAuthor = post.getUser().getId().equals(sessionUserId);
-        Like like = likeRepository.findUndeletedByPostIdAndUserId(postId, sessionUserId).orElse(null);
-        boolean isLiked = like != null;
+        boolean isLiked = likeRepository.findUndeletedByPostIdAndUserId(postId, sessionUserId).isPresent();
 
         List<HashTag> hashTags = hashTagService.findTagsByPostId(postId);
         List<String> tagNames = new ArrayList<>();
         for (HashTag hashTag : hashTags) {
             tagNames.add(hashTag.getTagName());
         }
-        return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, isLiked, tagNames);
+        return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, isLiked, tagNames, postLocationResponse);
     }
 
     public List<PostResponse> getPostListSortByCreatedAt(Long userId){
@@ -105,11 +138,22 @@ public class PostService {
                 () -> new NotFoundException(RequestMessage.NOT_FOUND_POST.getDescription())
         );
         permissionValidator.validatePermission(post.getUser().getId(), command.userId());
-        post.updatePost(command.title(),command.content(), command.contentImg());
+
+        Place place = getPlaceOrCreatePlace(command);
+
+        PostPlaceInfo postLocationResponse = null;
+
+        if (place != null) {
+            postLocationResponse =
+                    PostPlaceInfo.createPostLocationResponse(place);
+        }
+        post.updatePost(command.title(),command.content(), command.contentImg(), place);
 
         List<String> updatedTags = postHashTagService.updatePostTags(post, command.tags());
-        return  UpdatePostResponse.createResponse(post, updatedTags);
+        return  UpdatePostResponse.createResponse(post, updatedTags, postLocationResponse);
     }
+
+
 
     @Transactional
     public void deletePost(Long postId, Long sessionUserId){
@@ -136,17 +180,40 @@ public class PostService {
 
     @NonNull
     private List<PostResponse> getPostResponses(Long userId, List<Post> postList) {
-        return postList.stream().map(
-                post -> {
-                    boolean isLiked = likeRepository.findUndeletedByPostIdAndUserId(post.getId(), userId).isPresent();
-                    List<HashTag> hashTags = hashTagService.findTagsByPostId(post.getId());
-                    List<String> tagNames = new ArrayList<>();
-                    for (HashTag hashTag : hashTags) {
-                        tagNames.add(hashTag.getTagName());
-                    }
-                    return PostResponse.createPostResponse(post, isLiked,tagNames);
-                }
-        ).toList();
+        Set<Long> postIds  = new HashSet<>();
+        for (Post post : postList) {
+            postIds.add(post.getId());
+        }
+        Set<Long> likedPostIds = likeRepository.findUndeletedByPostIdsAndUserId(postIds, userId)
+                .stream()
+                .map(like -> like.getPost().getId())
+                .collect(Collectors.toSet());
+
+        Map<Long, List<String>> tagsByPostId =
+                hashTagService.findTagNamesByPostIds(postIds);
+
+        return postList.stream()
+                .map(post -> PostResponse.createPostResponse(
+                        post,
+                        likedPostIds.contains(post.getId()),
+                        tagsByPostId.getOrDefault(post.getId(), List.of())
+                ))
+                .toList();
+    }
+
+    private Place getPlaceOrCreatePlace(UpdatePostCommand command) {
+
+        if(command.location() == null){
+            return null;
+        }
+
+        return placeRepository.findByProviderPlaceId(command.location().providerPlaceId()).orElseGet(() -> placeRepository.save(new Place(
+                command.location().providerPlaceId(),
+                command.location().placeName(),
+                command.location().roadAddressName(),
+                command.location().latitude(),
+                command.location().longitude())
+        ));
     }
 
 }

@@ -1,13 +1,22 @@
 package kr.ktb.finn_week6.domain.post;
 
 import jakarta.persistence.*;
+import kr.ktb.finn_week6.domain.place.Place;
 import kr.ktb.finn_week6.domain.user.User;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "posts")
+@Table(
+        name = "posts",
+        indexes = {
+                @Index(
+                        name = "idx_posts_created_at",
+                        columnList = "created_at"
+                )
+        }
+)
 @Getter
 public class Post {
     @Id
@@ -17,6 +26,10 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "place_id")
+    private Place place;
 
     private String title;
     private  String content;
@@ -33,7 +46,12 @@ public class Post {
     }
 
     public Post(User user, String title, String content, String contentImg) {
+        this(user, title, content, contentImg, null);
+    }
+
+    public Post(User user, String title, String content, String contentImg, Place place) {
         this.user = user;
+        this.place = place;
         this.title = title;
         this.content = content;
         this.contentImg = contentImg;
@@ -46,10 +64,11 @@ public class Post {
         this.deletedAt = null;
     }
 
-    public void updatePost(String title, String content, String contentImg){
+    public void updatePost(String title, String content, String contentImg, Place place){
         this.title = title;
         this.content = content;
         this.contentImg = contentImg;
+        this.place = place;
         this.updatedAt = LocalDateTime.now();
     }
     public void increaseCommentCount(){

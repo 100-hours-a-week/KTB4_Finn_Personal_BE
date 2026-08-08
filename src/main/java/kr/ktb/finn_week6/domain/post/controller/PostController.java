@@ -79,27 +79,11 @@ public class PostController {
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(),postListResponse);
     }
 
-//    @GetMapping("/sort/like")
-//    @ResponseStatus(HttpStatus.OK)
-//    public ApiResponse<PostListResponse> getPostListByLikeCount(){
-//        List<PostResponse> postListSortByLikeCount = postService.getPostListSortByLikeCount();
-//        PostListResponse postListResponse = new PostListResponse(postListSortByLikeCount);
-//        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
-//    }
-//
-//    @GetMapping("/sort/mine")
-//    @ResponseStatus(HttpStatus.OK)
-//    public ApiResponse<PostListResponse> getPostListOfMine(@AuthenticationPrincipal Long userId){
-//        List<PostResponse> postListSortByLikeCount = postService.getPostListByUserId(userId);
-//        PostListResponse postListResponse = new PostListResponse(postListSortByLikeCount);
-//        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
-//    }
-
 
     @PatchMapping("/{postId}")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<UpdatePostResponse> updatePost(@PathVariable Long postId, @Valid @RequestBody UpdatePostRequest request, @AuthenticationPrincipal Long userId){
-        UpdatePostCommand command = request.toCommand(userId, postId);
+        UpdatePostCommand command = request.toCommand(userId, postId, request.location());
         UpdatePostResponse updatePostResponse = postService.updatePost(command);
 
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), updatePostResponse);
