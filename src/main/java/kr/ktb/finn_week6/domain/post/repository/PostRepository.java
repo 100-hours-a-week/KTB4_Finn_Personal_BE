@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static kr.ktb.finn_week6.domain.hashtag.QHashTag.hashTag;
 import static kr.ktb.finn_week6.domain.hashtag.QPostHashTag.postHashTag;
+import static kr.ktb.finn_week6.domain.place.QPlace.place;
 import static kr.ktb.finn_week6.domain.post.QPost.post;
 import static kr.ktb.finn_week6.domain.user.QUser.user;
 
@@ -42,7 +43,7 @@ public class PostRepository {
     }
 
     public List<Post> findPostsOrderByCreatedAtDesc(){
-        return em.createQuery("select p from Post p join fetch p.user where p.isDeleted = false order by p.createdAt desc", Post.class)
+        return em.createQuery("select p from Post p join fetch p.user left join fetch p.place where p.isDeleted = false order by p.createdAt desc", Post.class)
                 .setMaxResults(10)
                 .getResultList();
     }
@@ -54,6 +55,7 @@ public class PostRepository {
                 .join(postHashTag.post, post)
                 .join(post.user, user).fetchJoin()
                 .join(postHashTag.hashtag, hashTag)
+                .leftJoin(post.place, place).fetchJoin()
                 .where(
 
                         post.isDeleted.eq(false),
@@ -87,6 +89,7 @@ public class PostRepository {
         return queryFactory
                 .selectFrom(post)
                 .join(post.user, user).fetchJoin()
+                .leftJoin(post.place, place).fetchJoin()
                 .where(post.isDeleted.isFalse())
                 .where(post.likeCount.gt(0))
                 .orderBy(post.likeCount.desc())
@@ -98,6 +101,7 @@ public class PostRepository {
         return queryFactory
                 .selectFrom(post)
                 .join(post.user, user).fetchJoin()
+                .leftJoin(post.place, place).fetchJoin()
                 .where(post.isDeleted.isFalse())
                 .where(post.user.id.eq(userId))
                 .orderBy(post.createdAt.desc())

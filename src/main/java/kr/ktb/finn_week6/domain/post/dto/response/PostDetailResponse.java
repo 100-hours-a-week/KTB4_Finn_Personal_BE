@@ -20,7 +20,7 @@ public record PostDetailResponse(
         boolean isMine,
         boolean isLiked,
         List<String> tagNames,
-        PostPlaceInfo postPlaceInfo
+        PostPlaceInfo location
 ) {
     public static PostDetailResponse createPostDetailResponse(Post post, boolean isMine, boolean isLiked, List<String> tagNames, PostPlaceInfo postLocationResponse) {
         return new PostDetailResponse(

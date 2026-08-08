@@ -132,6 +132,8 @@ public class PostService {
         List<Post> postList = postRepository.findPostsByUserId(userId);
         return getPostResponses(userId, postList);
     }
+
+
     @Transactional
     public UpdatePostResponse updatePost(UpdatePostCommand command){
         Post post = postRepository.findById(command.postId()).orElseThrow(
@@ -152,8 +154,6 @@ public class PostService {
         List<String> updatedTags = postHashTagService.updatePostTags(post, command.tags());
         return  UpdatePostResponse.createResponse(post, updatedTags, postLocationResponse);
     }
-
-
 
     @Transactional
     public void deletePost(Long postId, Long sessionUserId){
@@ -196,7 +196,8 @@ public class PostService {
                 .map(post -> PostResponse.createPostResponse(
                         post,
                         likedPostIds.contains(post.getId()),
-                        tagsByPostId.getOrDefault(post.getId(), List.of())
+                        tagsByPostId.getOrDefault(post.getId(), List.of()),
+                        post.getPlace() != null ? PostPlaceInfo.createPostLocationResponse(post.getPlace()) : null
                 ))
                 .toList();
     }
