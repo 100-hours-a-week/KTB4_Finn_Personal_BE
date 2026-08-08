@@ -55,13 +55,13 @@ public class PostRepository {
                 .join(post.user, user).fetchJoin()
                 .join(postHashTag.hashtag, hashTag)
                 .where(
+
                         post.isDeleted.eq(false),
                         hashTag.tagName.eq(command.tag()),
                         dateRange(command)
                 )
                 .orderBy(
-                        post.createdAt.desc(),
-                        post.id.desc()
+                        postHashTag.createdAt.desc()
                 )
                 .limit(10)
                 .fetch();
@@ -108,7 +108,7 @@ public class PostRepository {
         LocalDateTime start = command.startDate().atStartOfDay();
         LocalDateTime end = command.endDate().plusDays(1).atStartOfDay();
 
-        return post.createdAt.goe(start)
-                .and(post.createdAt.lt(end));
+        return postHashTag.createdAt.goe(start)
+                .and(postHashTag.createdAt.lt(end));
     }
 }
