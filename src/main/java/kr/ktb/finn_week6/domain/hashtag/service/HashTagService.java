@@ -6,12 +6,12 @@ import kr.ktb.finn_week6.domain.hashtag.PostHashTag;
 import kr.ktb.finn_week6.domain.hashtag.repository.HashTagRepository;
 import kr.ktb.finn_week6.domain.hashtag.repository.PostHashtagRepository;
 import kr.ktb.finn_week6.domain.post.Post;
+import kr.ktb.finn_week6.global.util.HashtagNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +24,7 @@ public class HashTagService {
         if (tags == null || tags.isEmpty()) {
             return;
         }
-        List<String> normalizedTags = tags.stream()
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(tag -> !tag.isBlank())
-                .distinct()
-                .toList();
+        List<String> normalizedTags = HashtagNormalizer.normalize(tags);
 
         for (String tagName : normalizedTags) {
             HashTag hashTag = hashTagRepository.findByTagName(tagName)
@@ -41,7 +36,7 @@ public class HashTagService {
     }
 
     public List<HashTag> findTagsByPostId(Long postId) {
-        List<PostHashTag> postHashTags = postHashtagRepository.findAllByPostId(postId);
+        List<PostHashTag> postHashTags = postHashtagRepository.findTagsByPostId(postId);
         List<HashTag> hashTags = new ArrayList<>();
 
         for (PostHashTag postHashTag : postHashTags) {
@@ -50,4 +45,15 @@ public class HashTagService {
         return hashTags;
     }
 
+    public Map<Long, List<String>> findTagNamesByPostIds(Set<Long> postIds) {
+        return postHashtagRepository.findAllByPostIds(postIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        postHashTag -> postHashTag.getPost().getId(),
+                        Collectors.mapping(
+                                postHashTag -> postHashTag.getHashtag().getTagName(),
+                                Collectors.toList()
+                        )
+                ));
+    }
 }

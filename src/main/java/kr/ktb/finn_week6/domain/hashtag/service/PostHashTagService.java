@@ -6,10 +6,10 @@ import kr.ktb.finn_week6.domain.hashtag.PostHashTag;
 import kr.ktb.finn_week6.domain.hashtag.repository.HashTagRepository;
 import kr.ktb.finn_week6.domain.hashtag.repository.PostHashtagRepository;
 import kr.ktb.finn_week6.domain.post.Post;
+import kr.ktb.finn_week6.global.util.HashtagNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,11 +22,10 @@ public class PostHashTagService {
 
     @Transactional
     public List<String> updatePostTags(Post post, List<String> requestedTags) {
-        List<String> resultTags = requestedTags.stream()
-                .distinct()
-                .toList();
+        List<String> resultTags = HashtagNormalizer.normalize(requestedTags);
+
         List<PostHashTag> currentPostTags //기존 해시태그
-                = postHashtagRepository.findAllByPostId(post.getId());
+                = postHashtagRepository.findTagsByPostId(post.getId());
 
         List<PostHashTag> postTagsToDelete = //기존 해시태그에는 있지만 수정된 해시태그에는 없는 것들
                 currentPostTags.stream()
