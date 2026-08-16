@@ -12,7 +12,10 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static kr.ktb.finn_week6.domain.hashtag.QHashTag.hashTag;
 import static kr.ktb.finn_week6.domain.hashtag.QPostHashTag.postHashTag;
@@ -42,10 +45,31 @@ public class PostRepository {
                 .getResultList();
     }
 
-    public List<Post> findPostsOrderByCreatedAtDesc(){
-        return em.createQuery("select p from Post p join fetch p.user left join fetch p.place where p.isDeleted = false order by p.createdAt desc", Post.class)
-                .setMaxResults(10)
-                .getResultList();
+    public List<Post> findPostsOrderByCreatedAtDesc() {
+        List<Long> postIds = queryFactory
+                .select(post.id)
+                .from(post)
+                .where(post.isDeleted.isFalse())
+                .orderBy(post.createdAt.desc())
+                .limit(10)
+                .fetch();
+
+        if (postIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Post> postsById = queryFactory
+                .selectFrom(post)
+                .join(post.user, user).fetchJoin()
+                .leftJoin(post.place, place).fetchJoin()
+                .where(post.id.in(postIds))
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(Post::getId, Function.identity()));
+
+        return postIds.stream()
+                .map(postsById::get)
+                .toList();
     }
 
     public List<Post> findPostsBySearchTag(PostSearchCommand command) {

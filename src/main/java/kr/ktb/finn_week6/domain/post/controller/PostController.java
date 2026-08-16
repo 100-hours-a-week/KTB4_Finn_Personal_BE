@@ -22,10 +22,14 @@ import kr.ktb.finn_week6.domain.post.service.PostService;
 import kr.ktb.finn_week6.global.RequestMessage;
 import kr.ktb.finn_week6.global.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -69,7 +73,7 @@ public class PostController {
 
     @GetMapping("/search")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<PostListResponse> searchPostList(@ModelAttribute PostSearchRequest request, @AuthenticationPrincipal Long userId){
+    public ApiResponse<PostListResponse> searchPostList(@Valid @ModelAttribute PostSearchRequest request, @AuthenticationPrincipal Long userId){
 
         PostSearchCommand command = request.toCommand(userId);
         List<PostResponse> postListBySearchTag = postService.getPostListBySearchTag(command);
