@@ -60,6 +60,9 @@ public class PostController {
     public ApiResponse<PostListResponse> getPostList(@RequestParam(defaultValue = "RECENT") PostFilter filter,
 
                                                      @RequestParam(required = false)
+                                                     Integer cursorLikeCount,
+
+                                                     @RequestParam(required = false)
                                                      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                                                      LocalDateTime cursorCreatedAt,
                                                      @RequestParam(required = false) Long cursorId,
@@ -67,7 +70,7 @@ public class PostController {
 
                                                      @AuthenticationPrincipal Long userId){
 
-        PostListResponse postList = postService.getPostList(filter, cursorCreatedAt, cursorId, size, userId);
+        PostListResponse postList = postService.getPostList(filter, cursorLikeCount ,cursorCreatedAt, cursorId, size, userId);
 
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postList);
     }
@@ -87,7 +90,7 @@ public class PostController {
         PostSearchCommand command = request.toCommand(userId);
         List<PostResponse> postListBySearchTag = postService.getPostListBySearchTag(command);
 
-        PostListResponse postListResponse = PostListResponse.createPostListResponse(postListBySearchTag, null, null, false);
+        PostListResponse postListResponse = PostListResponse.createPostListResponse(postListBySearchTag, null,null, null, false);
 
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(),postListResponse);
     }

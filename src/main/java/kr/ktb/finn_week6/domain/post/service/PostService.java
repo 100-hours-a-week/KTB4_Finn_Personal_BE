@@ -112,7 +112,7 @@ public class PostService {
         return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, isLiked, tagNames, postLocationResponse);
     }
 
-    public PostListResponse getPostList(PostFilter filter, LocalDateTime cursorCreatedAt, Long cursorId, int size, Long userId) {
+    public PostListResponse getPostList(PostFilter filter, Integer cursorLikeCount ,LocalDateTime cursorCreatedAt, Long cursorId, int size, Long userId) {
 
         List<Post> postList = new ArrayList<>();
 
@@ -120,7 +120,7 @@ public class PostService {
             postList = postRepository.findPostsOrderByCreatedAtDesc(cursorCreatedAt, cursorId, size+1);
         }
         else if(filter == PostFilter.POPULAR){
-            postList = postRepository.findPostsOrderByLikeCountDesc(cursorCreatedAt, cursorId, size+1);
+            postList = postRepository.findPostsOrderByLikeCountDesc(cursorLikeCount,cursorCreatedAt, cursorId, size+1);
         }
 
 
@@ -131,13 +131,16 @@ public class PostService {
         List<PostResponse> postResponses = getPostResponses(userId, pagePosts);
 
         if(pagePosts.isEmpty()){
-            return PostListResponse.createPostListResponse(postResponses, null, null, false);
+            return PostListResponse.createPostListResponse(postResponses, null,null, null, false);
         }
 
         Post lastPost = pagePosts.getLast();
 
+        Integer nextCursorLikeCount = filter == PostFilter.POPULAR && hasNext ? lastPost.getLikeCount() : null;
+
         return new PostListResponse(
                 postResponses,
+                nextCursorLikeCount,
                 hasNext ? lastPost.getCreatedAt() : null,
                 hasNext ? lastPost.getId() : null,
                 hasNext

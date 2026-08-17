@@ -6,12 +6,18 @@ import java.util.List;
 
 public record PostListResponse(
         List<PostResponse> posts,
-        LocalDateTime nextCursorCreatedAt,
-        Long nextCursorId,
+        Integer cursorLikeCount,
+        LocalDateTime cursorCreatedAt,
+        Long cursorId,
         boolean hasNext
 
 ) {
-    public static PostListResponse createPostListResponse(List<PostResponse> postResponses, LocalDateTime nextCursorCreatedAt, Long nextCursorId, boolean hasNext){
-        return new PostListResponse(postResponses, nextCursorCreatedAt, nextCursorId, hasNext);
+    public static PostListResponse createPostListResponse(List<PostResponse> postResponses, Integer cursorLikeCount ,LocalDateTime cursorCreatedAt, Long cursorId, boolean hasNext){
+        return new PostListResponse(
+                postResponses,
+                cursorLikeCount,
+                cursorCreatedAt,
+                cursorId,
+                hasNext);
     }
 }
