@@ -14,6 +14,7 @@ import kr.ktb.finn_week6.domain.post.Post;
 import kr.ktb.finn_week6.domain.post.dto.command.CreatePostCommand;
 import kr.ktb.finn_week6.domain.post.dto.command.PostSearchCommand;
 import kr.ktb.finn_week6.domain.post.dto.command.UpdatePostCommand;
+import kr.ktb.finn_week6.domain.post.dto.enums.PostFilter;
 import kr.ktb.finn_week6.domain.post.dto.response.*;
 import kr.ktb.finn_week6.domain.post.repository.PostRepository;
 import kr.ktb.finn_week6.domain.user.User;
@@ -27,6 +28,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -110,10 +112,39 @@ public class PostService {
         return PostDetailResponse.createPostDetailResponse(post,isPostAuthor, isLiked, tagNames, postLocationResponse);
     }
 
-    public List<PostResponse> getPostListSortByCreatedAt(Long userId){
-        List<Post> postList = postRepository.findPostsOrderByCreatedAtDesc();
-        return getPostResponses(userId, postList);
+    public PostListResponse getPostList(PostFilter filter, LocalDateTime cursorCreatedAt, Long cursorId, int size, Long userId) {
+
+        List<Post> postList = new ArrayList<>();
+
+        if(filter == PostFilter.RECENT){
+            postList = postRepository.findPostsOrderByCreatedAtDesc(cursorCreatedAt, cursorId, size+1);
+        }
+        else if(filter == PostFilter.POPULAR){
+            postList = postRepository.findPostsOrderByLikeCountDesc(cursorCreatedAt, cursorId, size+1);
+        }
+
+
+        boolean hasNext = postList.size() > size;
+
+        List<Post> pagePosts = hasNext ? postList.subList(0, size) : postList;
+
+        List<PostResponse> postResponses = getPostResponses(userId, pagePosts);
+
+        if(pagePosts.isEmpty()){
+            return PostListResponse.createPostListResponse(postResponses, null, null, false);
+        }
+
+        Post lastPost = pagePosts.getLast();
+
+        return new PostListResponse(
+                postResponses,
+                hasNext ? lastPost.getCreatedAt() : null,
+                hasNext ? lastPost.getId() : null,
+                hasNext
+        );
     }
+
+
 
     public List<PostResponse> getPostListBySearchTag(PostSearchCommand command){
         List<Post> postsBySearchTag = postRepository.findPostsBySearchTag(command);
@@ -121,11 +152,6 @@ public class PostService {
     }
     public List<MostViewPostResponse> getPostListSortByViewCount(){
         return postRepository.findPostsOrderByViewCountDesc();
-    }
-
-    public List<PostResponse> getPostListSortByLikeCount(Long userId){
-        List<Post> postList = postRepository.findPostsOrderByLikeCountDesc();
-        return getPostResponses(userId, postList);
     }
 
     public List<PostResponse> getPostListByUserId(Long userId){
@@ -216,5 +242,6 @@ public class PostService {
                 command.location().longitude())
         ));
     }
+
 
 }

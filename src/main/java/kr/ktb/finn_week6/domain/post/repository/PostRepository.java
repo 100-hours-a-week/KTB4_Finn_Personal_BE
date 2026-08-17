@@ -1,5 +1,6 @@
 package kr.ktb.finn_week6.domain.post.repository;
 
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -8,6 +9,7 @@ import kr.ktb.finn_week6.domain.post.Post;
 import kr.ktb.finn_week6.domain.post.dto.command.PostSearchCommand;
 import kr.ktb.finn_week6.domain.post.dto.response.MostViewPostResponse;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -45,15 +47,51 @@ public class PostRepository {
                 .getResultList();
     }
 
-    public List<Post> findPostsOrderByCreatedAtDesc() {
+    public List<Post> findPostsOrderByCreatedAtDesc(
+            LocalDateTime cursorCreatedAt,
+            Long cursorId,
+            int limit
+    ) {
         List<Long> postIds = queryFactory
                 .select(post.id)
                 .from(post)
-                .where(post.isDeleted.isFalse())
-                .orderBy(post.createdAt.desc())
-                .limit(10)
+                .where(
+                        post.isDeleted.isFalse(),
+                        recentCursorCondition(cursorCreatedAt, cursorId)
+                )
+                .orderBy(post.createdAt.desc(),
+                        post.id.desc())
+                .limit(limit)
                 .fetch();
 
+        return joinExtraInfo(postIds);
+    }
+
+    public List<Post> findPostsOrderByLikeCountDesc(
+            LocalDateTime cursorCreatedAt,
+            Long cursorId,
+            int limit
+    ) {
+        List<Long> postIds = queryFactory
+                .select(post.id)
+                .from(post)
+                .where(
+                        post.isDeleted.isFalse(),
+                        post.likeCount.gt(0),
+                        recentCursorCondition(cursorCreatedAt, cursorId)
+                )
+                .orderBy(
+                        post.likeCount.desc(),
+                        post.createdAt.desc(),
+                        post.id.desc())
+                .limit(limit)
+                .fetch();
+
+        return joinExtraInfo(postIds);
+    }
+
+    @NonNull
+    private List<Post> joinExtraInfo(List<Long> postIds) {
         if (postIds.isEmpty()) {
             return List.of();
         }
@@ -72,6 +110,7 @@ public class PostRepository {
                 .toList();
     }
 
+
     public List<Post> findPostsBySearchTag(PostSearchCommand command) {
         return queryFactory
                 .select(post)
@@ -87,7 +126,8 @@ public class PostRepository {
                         dateRange(command)
                 )
                 .orderBy(
-                        postHashTag.createdAt.desc()
+                        postHashTag.createdAt.desc(),
+                        postHashTag.postId.desc()
                 )
                 .limit(10)
                 .fetch();
@@ -109,17 +149,6 @@ public class PostRepository {
                 .fetch();
     }
 
-    public List<Post> findPostsOrderByLikeCountDesc() {
-        return queryFactory
-                .selectFrom(post)
-                .join(post.user, user).fetchJoin()
-                .leftJoin(post.place, place).fetchJoin()
-                .where(post.isDeleted.isFalse())
-                .where(post.likeCount.gt(0))
-                .orderBy(post.likeCount.desc())
-                .limit(10)
-                .fetch();
-    }
 
     public List<Post> findPostsByUserId(Long userId) {
         return queryFactory
@@ -138,5 +167,20 @@ public class PostRepository {
 
         return postHashTag.createdAt.goe(start)
                 .and(postHashTag.createdAt.lt(end));
+    }
+
+    private BooleanExpression recentCursorCondition(LocalDateTime cursorCreatedAt, Long cursorId) {
+        if(cursorCreatedAt == null && cursorId == null){
+            return null;
+        }
+        if(cursorCreatedAt == null || cursorId == null){
+            throw new IllegalArgumentException("cursorCreatedAt과 cursorId 모두 필요합니다.");
+        }
+
+        return post.createdAt.lt(cursorCreatedAt)
+                .or(
+                        post.createdAt.eq(cursorCreatedAt)
+                                .and(post.id.lt(cursorId))
+                );
     }
 }

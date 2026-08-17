@@ -40,6 +40,11 @@ public class PostHashTag {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+
+    @Column(name = "post_id", insertable = false, updatable = false)
+    private Long postId;
+
+
     public PostHashTag() {
     }
 

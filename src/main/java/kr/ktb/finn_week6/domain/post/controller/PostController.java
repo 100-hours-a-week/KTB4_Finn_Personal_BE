@@ -57,28 +57,37 @@ public class PostController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<PostListResponse> getPostList(@RequestParam(defaultValue = "RECENT") PostFilter filter, @AuthenticationPrincipal Long userId){
-        List<PostResponse> postList = null;
-        if(filter == PostFilter.RECENT){
-            postList = postService.getPostListSortByCreatedAt(userId);
-        }else if(filter == PostFilter.POPULAR){
-            postList = postService.getPostListSortByLikeCount(userId);
-        }else if (filter == PostFilter.MINE){
-            postList = postService.getPostListByUserId(userId);
-        }
-        PostListResponse postListResponse = PostListResponse.createPostListResponse(postList);
+    public ApiResponse<PostListResponse> getPostList(@RequestParam(defaultValue = "RECENT") PostFilter filter,
 
-        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postListResponse);
+                                                     @RequestParam(required = false)
+                                                     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                                                     LocalDateTime cursorCreatedAt,
+                                                     @RequestParam(required = false) Long cursorId,
+                                                     @RequestParam(defaultValue = "10") int size,
+
+                                                     @AuthenticationPrincipal Long userId){
+
+        PostListResponse postList = postService.getPostList(filter, cursorCreatedAt, cursorId, size, userId);
+
+        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(), postList);
     }
 
     @GetMapping("/search")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<PostListResponse> searchPostList(@Valid @ModelAttribute PostSearchRequest request, @AuthenticationPrincipal Long userId){
+    public ApiResponse<PostListResponse> searchPostList(@Valid @ModelAttribute PostSearchRequest request,
+
+                                                        @RequestParam(required = false)
+                                                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                                                        LocalDateTime cursorCreatedAt,
+                                                        @RequestParam(required = false) Long cursorId,
+                                                        @RequestParam(defaultValue = "10") int size,
+
+                                                        @AuthenticationPrincipal Long userId){
 
         PostSearchCommand command = request.toCommand(userId);
         List<PostResponse> postListBySearchTag = postService.getPostListBySearchTag(command);
 
-        PostListResponse postListResponse = PostListResponse.createPostListResponse(postListBySearchTag);
+        PostListResponse postListResponse = PostListResponse.createPostListResponse(postListBySearchTag, null, null, false);
 
         return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(),postListResponse);
     }
