@@ -88,11 +88,10 @@ public class PostController {
                                                         @AuthenticationPrincipal Long userId){
 
         PostSearchCommand command = request.toCommand(userId);
-        List<PostResponse> postListBySearchTag = postService.getPostListBySearchTag(command);
+        PostListResponse postListBySearchTag = postService.getPostListBySearchTag(command, cursorCreatedAt, cursorId, size, userId);
 
-        PostListResponse postListResponse = PostListResponse.createPostListResponse(postListBySearchTag, null,null, null, false);
 
-        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(),postListResponse);
+        return new ApiResponse<>(RequestMessage.SUCCESS.getDescription(),postListBySearchTag);
     }
 
 

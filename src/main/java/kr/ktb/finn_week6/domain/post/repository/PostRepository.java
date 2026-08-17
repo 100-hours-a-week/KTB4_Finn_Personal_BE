@@ -9,6 +9,7 @@ import kr.ktb.finn_week6.domain.post.Post;
 import kr.ktb.finn_week6.domain.post.dto.command.PostSearchCommand;
 import kr.ktb.finn_week6.domain.post.dto.response.MostViewPostResponse;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -63,22 +64,7 @@ public class PostRepository {
                 .limit(limit)
                 .fetch();
 
-        if (postIds.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Long, Post> postsById = queryFactory
-                .selectFrom(post)
-                .join(post.user, user).fetchJoin()
-                .leftJoin(post.place, place).fetchJoin()
-                .where(post.id.in(postIds))
-                .fetch()
-                .stream()
-                .collect(Collectors.toMap(Post::getId, Function.identity()));
-
-        return postIds.stream()
-                .map(postsById::get)
-                .toList();
+        return getExtraJoinInfo(postIds);
     }
 
     public List<Post> findPostsOrderByLikeCountDesc(
@@ -102,46 +88,34 @@ public class PostRepository {
                 .limit(limit)
                 .fetch();
 
-        if (postIds.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Long, Post> postsById = queryFactory
-                .selectFrom(post)
-                .join(post.user, user).fetchJoin()
-                .leftJoin(post.place, place).fetchJoin()
-                .where(post.id.in(postIds))
-                .fetch()
-                .stream()
-                .collect(Collectors.toMap(Post::getId, Function.identity()));
-
-        return postIds.stream()
-                .map(postsById::get)
-                .toList();
+        return getExtraJoinInfo(postIds);
     }
 
 
+    public List<Post> findPostsBySearchTag(
+            PostSearchCommand command,
+            LocalDateTime cursorCreatedAt,
+            Long cursorId,
+            int limit) {
 
-    public List<Post> findPostsBySearchTag(PostSearchCommand command) {
-        return queryFactory
-                .select(post)
+        List<Long> postIds = queryFactory
+                .select(postHashTag.postId)
                 .from(postHashTag)
                 .join(postHashTag.post, post)
-                .join(post.user, user).fetchJoin()
                 .join(postHashTag.hashtag, hashTag)
-                .leftJoin(post.place, place).fetchJoin()
                 .where(
-
-                        post.isDeleted.eq(false),
                         hashTag.tagName.eq(command.tag()),
-                        dateRange(command)
+                        dateRange(command),
+                        searchCursorCondition(cursorCreatedAt, cursorId),
+                        post.isDeleted.isFalse()
                 )
                 .orderBy(
                         postHashTag.createdAt.desc(),
                         postHashTag.postId.desc()
                 )
-                .limit(10)
+                .limit(limit)
                 .fetch();
+        return getExtraJoinInfo(postIds);
     }
 
     public List<MostViewPostResponse> findPostsOrderByViewCountDesc() {
@@ -220,5 +194,45 @@ public class PostRepository {
                                 .and(post.createdAt.eq(cursorCreatedAt))
                                 .and(post.id.lt(cursorId))
                 );
+    }
+
+    private BooleanExpression searchCursorCondition(
+            LocalDateTime cursorCreatedAt,
+            Long cursorId
+    ) {
+        if (cursorCreatedAt == null && cursorId == null) {
+            return null;
+        }
+        if(cursorCreatedAt == null || cursorId == null){
+            throw new IllegalArgumentException("검색 Cursor 값이 모두 필요합니다.");
+        }
+
+        return postHashTag.createdAt.lt(cursorCreatedAt)
+                .or(
+                        postHashTag.createdAt.eq(cursorCreatedAt)
+                                .and(postHashTag.postId.lt(cursorId))
+                );
+    }
+
+
+
+    @NonNull
+    private List<Post> getExtraJoinInfo(List<Long> postIds) {
+        if (postIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Post> postsById = queryFactory
+                .selectFrom(post)
+                .join(post.user, user).fetchJoin()
+                .leftJoin(post.place, place).fetchJoin()
+                .where(post.id.in(postIds))
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(Post::getId, Function.identity()));
+
+        return postIds.stream()
+                .map(postsById::get)
+                .toList();
     }
 }

@@ -123,13 +123,9 @@ public class PostService {
             postList = postRepository.findPostsOrderByLikeCountDesc(cursorLikeCount,cursorCreatedAt, cursorId, size+1);
         }
 
-
         boolean hasNext = postList.size() > size;
-
         List<Post> pagePosts = hasNext ? postList.subList(0, size) : postList;
-
         List<PostResponse> postResponses = getPostResponses(userId, pagePosts);
-
         if(pagePosts.isEmpty()){
             return PostListResponse.createPostListResponse(postResponses, null,null, null, false);
         }
@@ -149,9 +145,25 @@ public class PostService {
 
 
 
-    public List<PostResponse> getPostListBySearchTag(PostSearchCommand command){
-        List<Post> postsBySearchTag = postRepository.findPostsBySearchTag(command);
-        return getPostResponses(command.userId(), postsBySearchTag);
+    public PostListResponse getPostListBySearchTag(PostSearchCommand command, LocalDateTime cursorCreatedAt, Long cursorId, int size, Long userId){
+        List<Post> postsBySearchTag = postRepository.findPostsBySearchTag(command, cursorCreatedAt, cursorId, size+1);
+
+        boolean hasNext = postsBySearchTag.size() > size;
+        List<Post> pagePosts = hasNext ? postsBySearchTag.subList(0, size) : postsBySearchTag;
+        List<PostResponse> postResponses = getPostResponses(userId, pagePosts);
+        if(pagePosts.isEmpty()){
+            return PostListResponse.createPostListResponse(postResponses, null,null, null, false);
+        }
+
+        Post lastPost = pagePosts.getLast();
+
+        return new PostListResponse(
+                postResponses,
+                null,
+                hasNext ? lastPost.getCreatedAt() : null,
+                hasNext ? lastPost.getId() : null,
+                hasNext
+        );
     }
     public List<MostViewPostResponse> getPostListSortByViewCount(){
         return postRepository.findPostsOrderByViewCountDesc();
